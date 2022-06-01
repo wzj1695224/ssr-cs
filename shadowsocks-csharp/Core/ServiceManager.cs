@@ -4,6 +4,31 @@ using System.Collections.Generic;
 
 namespace Shadowsocks.Core
 {
+	
+	internal class ServiceManager
+	{
+		public static readonly IEventBus EventBus = new EventBus();
+		public static IMenuClickService MenuClickService => ServiceStore.Get<IMenuClickService>(typeof(IMenuClickService));
+
+
+		public static void Register(Type type, object obj)
+		{
+			// check type
+			if ( !type.IsInstanceOfType(obj) )
+				throw new Exception($"{obj} is not instance of {type}");
+
+			// only one instance
+			var old = ServiceStore.Get<object>(type);
+			if ( old != null )
+				throw new Exception($"{type} has already registered by {old}");
+
+			ServiceStore.Objects.Add(type, obj);
+		}
+
+	}
+
+
+
 
 	internal class ServiceStore
 	{
@@ -19,24 +44,9 @@ namespace Shadowsocks.Core
 
 
 
-	internal class ServiceManager
+	internal class EventBus : IEventBus
 	{
-		public static void Register(Type type, object obj)
-		{
-			// check type
-			if ( !type.IsInstanceOfType(obj) )
-				throw new Exception($"{obj} is not instance of {type}");
-
-			// only one instance
-			var old = ServiceStore.Get<object>(type);
-			if ( old != null )
-				throw new Exception($"{type} has already registered by {old}");
-
-			ServiceStore.Objects.Add(type, obj);
-		}
-
-
-		public IMenuClickService MenuClickService => ServiceStore.Get<IMenuClickService>(typeof(IMenuClickService));
+		public event Action<ProxyMode> OnProxyModeChange;
 	}
 
 }

@@ -6,6 +6,7 @@ using System.IO;
 using System.Text;
 using System.Windows.Forms;
 using System.Threading;
+using Shadowsocks.Core;
 using Shadowsocks.Encryption;
 
 namespace Shadowsocks.Model
@@ -528,45 +529,49 @@ namespace Shadowsocks.Model
             return LoadFile(CONFIG_FILE);
         }
 
+
         public static void Save(Configuration config)
         {
+            // fix index
             if (config.index >= config.configs.Count)
-            {
-                config.index = config.configs.Count - 1;
-            }
+	            config.index = config.configs.Count - 1;
             if (config.index < 0)
-            {
-                config.index = 0;
-            }
+	            config.index = 0;
+            
             try
             {
-                string jsonString = SimpleJson.SimpleJson.SerializeObject(config);
+                var jsonString = SimpleJson.SimpleJson.SerializeObject(config);
+
+                // encrypt
                 if (GlobalConfiguration.config_password.Length > 0)
                 {
-                    IEncryptor encryptor = EncryptorFactory.GetEncryptor("aes-256-cfb", GlobalConfiguration.config_password, false);
-                    byte[] cfg_data = UTF8Encoding.UTF8.GetBytes(jsonString);
-                    byte[] cfg_encrypt = new byte[cfg_data.Length + 128];
+                    var encryptor = EncryptorFactory.GetEncryptor("aes-256-cfb", GlobalConfiguration.config_password, false);
+                    byte[] data = Encoding.UTF8.GetBytes(jsonString);
+                    byte[] cfg_encrypt = new byte[data.Length + 128];
                     int data_len = 0;
                     const int buffer_size = 32768;
                     byte[] input = new byte[buffer_size];
                     byte[] ouput = new byte[buffer_size + 128];
-                    for (int start_pos = 0; start_pos < cfg_data.Length; start_pos += buffer_size)
+                    for (int start_pos = 0; start_pos < data.Length; start_pos += buffer_size)
                     {
-                        int len = Math.Min(cfg_data.Length - start_pos, buffer_size);
+                        int len = Math.Min(data.Length - start_pos, buffer_size);
                         int out_len;
-                        Buffer.BlockCopy(cfg_data, start_pos, input, 0, len);
+                        Buffer.BlockCopy(data, start_pos, input, 0, len);
                         encryptor.Encrypt(input, len, ouput, out out_len);
                         Buffer.BlockCopy(ouput, 0, cfg_encrypt, data_len, out_len);
                         data_len += out_len;
                     }
                     jsonString = System.Convert.ToBase64String(cfg_encrypt, 0, data_len);
                 }
-                using (StreamWriter sw = new StreamWriter(File.Open(CONFIG_FILE, FileMode.Create)))
+
+                // write
+                using (var sw = new StreamWriter(File.Open(CONFIG_FILE, FileMode.Create)))
                 {
                     sw.Write(jsonString);
                     sw.Flush();
                 }
 
+                // backup
                 if (File.Exists(CONFIG_FILE_BACKUP))
                 {
                     DateTime dt = File.GetLastWriteTimeUtc(CONFIG_FILE_BACKUP);
@@ -589,6 +594,7 @@ namespace Shadowsocks.Model
 
         public static Configuration Load(string config_str)
         {
+            // try decrypt
             try
             {
                 if (GlobalConfiguration.config_password.Length > 0)
@@ -612,10 +618,8 @@ namespace Shadowsocks.Model
                     config_str = UTF8Encoding.UTF8.GetString(cfg_data, 0, data_len);
                 }
             }
-            catch
-            {
+            catch {}
 
-            }
             try
             {
                 Configuration config = SimpleJson.SimpleJson.DeserializeObject<Configuration>(config_str, new JsonSerializerStrategy());

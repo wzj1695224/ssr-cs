@@ -141,13 +141,15 @@
     <Compile Include="Controller\I18N.cs" />
     <Compile Include="Controller\Listener.cs" />
     <Compile Include="Controller\Logging.cs" />
+    <Compile Include="Controller\ModelManager.cs" />
     <Compile Include="Controller\ProxyAuth.cs" />
+    <Compile Include="Core\EventBus.cs" />
+    <Compile Include="Core\ProxyMode.cs" />
     <Compile Include="Controller\ProxySocket.cs" />
     <Compile Include="Controller\Socks5Forwarder.cs" />
     <Compile Include="Controller\SpeedTest.cs" />
     <Compile Include="Controller\UpdateChecker.cs" />
     <Compile Include="Controller\UpdateFreeNode.cs" />
-    <Compile Include="Core\MenuRegistry.cs" />
     <Compile Include="Core\Services.cs" />
     <Compile Include="Encryption\EncryptorBase.cs" />
     <Compile Include="Encryption\EncryptorFactory.cs" />
@@ -163,6 +165,9 @@
     <Compile Include="Controller\PACServer.cs" />
     <Compile Include="Core\ServiceManager.cs" />
     <Compile Include="Framework\Binding\Extensions.cs" />
+    <Compile Include="Framework\Binding\LiveData.cs" />
+    <Compile Include="Framework\Extension\ObjectExtensions.cs" />
+    <Compile Include="Model\ConfigurationModel.cs" />
     <Compile Include="Model\Host.cs" />
     <Compile Include="Model\IPRangeSet.cs" />
     <Compile Include="Model\IPSegment.cs" />

@@ -7,7 +7,8 @@ using System.Threading.Tasks;
 
 namespace Shadowsocks.Core
 {
-	internal class MenuRegistry
+	internal interface IEventBus
 	{
+		event Action<ProxyMode> OnProxyModeChange;
 	}
 }

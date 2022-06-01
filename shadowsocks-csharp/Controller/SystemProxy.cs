@@ -8,6 +8,7 @@ using System.IO;
 using Shadowsocks.Model;
 
 using System.ComponentModel;
+using Shadowsocks.Core;
 
 namespace Shadowsocks.Controller
 {
