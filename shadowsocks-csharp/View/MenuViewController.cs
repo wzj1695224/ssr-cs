@@ -13,6 +13,7 @@ using Shadowsocks.Core;
 using ZXing;
 using ZXing.Common;
 using ZXing.QrCode;
+using ProxyMode = Shadowsocks.Controller.ProxyMode;
 
 namespace Shadowsocks.View
 {
