@@ -9,6 +9,7 @@ using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows.Forms;
+using Shadowsocks.Core;
 using ZXing;
 using ZXing.Common;
 using ZXing.QrCode;
@@ -27,8 +28,11 @@ namespace Shadowsocks.View
         }
     }
 
-    public class MenuViewController
+
+    public class MenuViewController : IMenuClickService
     {
+	    public event EventHandler OnMenuClick;
+
         // yes this is just a menu view controller
         // when config form is closed, it moves away from RAM
         // and it should just do anything related to the config form
@@ -39,7 +43,6 @@ namespace Shadowsocks.View
         private UpdateSubscribeManager updateSubscribeManager;
 
         private NotifyIcon _notifyIcon;
-        private ContextMenu contextMenu1;
 
         private MenuItem noModifyItem;
         private MenuItem enableItem;
@@ -77,8 +80,6 @@ namespace Shadowsocks.View
         {
             this.controller = controller;
 
-            LoadMenu();
-
             controller.ToggleModeChanged += controller_ToggleModeChanged;
             controller.ToggleRuleModeChanged += controller_ToggleRuleModeChanged;
             controller.ConfigChanged += controller_ConfigChanged;
@@ -92,7 +93,7 @@ namespace Shadowsocks.View
             _notifyIcon = new NotifyIcon();
             UpdateTrayIcon();
             _notifyIcon.Visible = true;
-            _notifyIcon.ContextMenu = contextMenu1;
+            _notifyIcon.ContextMenu = CreateContextMenu();
             _notifyIcon.MouseClick += notifyIcon1_Click;
             //_notifyIcon.MouseDoubleClick += notifyIcon1_DoubleClick;
 
@@ -230,9 +231,11 @@ namespace Shadowsocks.View
             return new MenuItem(I18N.GetString(text), items);
         }
 
-        private void LoadMenu()
+
+        private ContextMenu CreateContextMenu()
         {
-            this.contextMenu1 = new ContextMenu(new MenuItem[] {
+            return new ContextMenu(new MenuItem[] {
+                // Mode
                 modeItem = CreateMenuGroup("Mode", new MenuItem[] {
                     enableItem = CreateMenuItem("Disable system proxy", new EventHandler(this.EnableItem_Click)),
                     PACModeItem = CreateMenuItem("PAC", new EventHandler(this.PACModeItem_Click)),
@@ -240,6 +243,8 @@ namespace Shadowsocks.View
                     new MenuItem("-"),
                     noModifyItem = CreateMenuItem("No modify system proxy", new EventHandler(this.NoModifyItem_Click))
                 }),
+
+                // PAC
                 CreateMenuGroup("PAC ", new MenuItem[] {
                     CreateMenuItem("Update local PAC from Lan IP list", new EventHandler(this.UpdatePACFromLanIPListItem_Click)),
                     new MenuItem("-"),
@@ -253,6 +258,8 @@ namespace Shadowsocks.View
                     CreateMenuItem("Edit local PAC file...", new EventHandler(this.EditPACFileItem_Click)),
                     CreateMenuItem("Edit user rule for GFWList...", new EventHandler(this.EditUserRuleFileForGFWListItem_Click)),
                 }),
+
+                // Proxy rule
                 CreateMenuGroup("Proxy rule", new MenuItem[] {
                     ruleBypassLan = CreateMenuItem("Bypass LAN", new EventHandler(this.RuleBypassLanItem_Click)),
                     ruleBypassChina = CreateMenuItem("Bypass LAN && China", new EventHandler(this.RuleBypassChinaItem_Click)),

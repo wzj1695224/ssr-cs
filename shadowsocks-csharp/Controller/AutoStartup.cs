@@ -1,128 +1,93 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using System;
+using System.Linq;
 using System.Windows.Forms;
-using Microsoft.Win32;
+
 
 namespace Shadowsocks.Controller
 {
-    class AutoStartup
+	internal class AutoStartup
     {
-        static string Key = "ShadowsocksR_" + Application.StartupPath.GetHashCode();
-        static string RegistryRunPath = (IntPtr.Size == 4 ? @"Software\Microsoft\Windows\CurrentVersion\Run" : @"SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Run");
+	    private static readonly string KEY = "ShadowsocksR_" + Application.StartupPath.GetHashCode();
 
-        public static bool Set(bool enabled)
+
+        public static bool Set(bool toEnable)
         {
-            RegistryKey runKey = null;
-            try
-            {
-                string path = Util.Utils.GetExecutablePath();
-                runKey = Registry.LocalMachine.OpenSubKey(RegistryRunPath, true);
-                if (enabled)
-                {
-                    runKey.SetValue(Key, path);
-                }
-                else
-                {
-                    runKey.DeleteValue(Key);
-                }
-                runKey.Close();
-                return true;
-            }
-            catch //(Exception e)
-            {
-                //Logging.LogUsefulException(e);
-                return Util.Utils.RunAsAdmin("--setautorun") == 0;
-            }
-            finally
-            {
-                if (runKey != null)
-                {
-                    try
-                    {
-                        runKey.Close();
-                    }
-                    catch (Exception e)
-                    {
-                        Logging.LogUsefulException(e);
-                    }
-                }
-            }
+	        if (toEnable)
+		        RegistryStartup.Del(KEY);
+	        else
+	        {
+		        var executablePath = Util.Utils.GetExecutablePath();
+		        RegistryStartup.Set(KEY,  executablePath);
+	        }
+
+	        return true;
         }
+
 
         public static bool Switch()
         {
-            bool enabled = !Check();
-            RegistryKey runKey = null;
-            try
-            {
-                string path = Util.Utils.GetExecutablePath();
-                runKey = Registry.LocalMachine.OpenSubKey(RegistryRunPath, true);
-                if (enabled)
-                {
-                    runKey.SetValue(Key, path);
-                }
-                else
-                {
-                    runKey.DeleteValue(Key);
-                }
-                runKey.Close();
-                return true;
-            }
-            catch (Exception e)
-            {
-                Logging.LogUsefulException(e);
-                return false;
-            }
-            finally
-            {
-                if (runKey != null)
-                {
-                    try
-                    {
-                        runKey.Close();
-                    }
-                    catch (Exception e)
-                    {
-                        Logging.LogUsefulException(e);
-                    }
-                }
-            }
+	        var enabled = Check();
+	        return Set(!enabled);
         }
+
 
         public static bool Check()
         {
-            RegistryKey runKey = null;
-            try
-            {
-                string path = Util.Utils.GetExecutablePath();
-                runKey = Registry.LocalMachine.OpenSubKey(RegistryRunPath, false);
-                string[] runList = runKey.GetValueNames();
-                runKey.Close();
-                foreach (string item in runList)
-                {
-                    if (item.Equals(Key))
-                        return true;
-                }
-                return false;
-            }
-            catch (Exception e)
-            {
-                Logging.LogUsefulException(e);
-                return false;
-            }
-            finally
-            {
-                if (runKey != null)
-                {
-                    try
-                    {
-                        runKey.Close();
-                    }
-                    catch (Exception e)
-                    {
-                        Logging.LogUsefulException(e);
-                    }
-                }
-            }
+	        return RegistryStartup.Contain(KEY);
         }
-    }
+
+
+
+
+		/// <summary>
+		/// AutoStartup by Registry
+		/// </summary>
+		private static class RegistryStartup
+		{
+			public static object Get(string name)
+			{
+				using ( var runKey = Registry.LocalMachine.OpenSubKey(GetRegistryRunPath(), false) )
+				{
+					return runKey?.GetValue(name, null);
+				}
+			}
+
+
+			public static void Set(string name, object val)
+			{
+				using ( var runKey = Registry.LocalMachine.OpenSubKey(GetRegistryRunPath(), false) )
+				{
+					runKey?.SetValue(name, val);
+				}
+			}
+
+
+			public static void Del(string name)
+			{
+				using ( var runKey = Registry.LocalMachine.OpenSubKey(GetRegistryRunPath(), false) )
+				{
+					runKey?.DeleteValue(name);
+				}
+			}
+
+
+			public static bool Contain(string name)
+			{
+				using ( var runKey = Registry.LocalMachine.OpenSubKey(GetRegistryRunPath(), false) )
+				{
+					return runKey != null && runKey.GetValueNames().Any(declName => name == declName);
+				}
+			}
+
+
+			private static string GetRegistryRunPath()
+			{
+				return IntPtr.Size == 4 ?
+					@"Software\Microsoft\Windows\CurrentVersion\Run" :
+					@"SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Run";
+			}
+		}
+	}
+
 }

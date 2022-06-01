@@ -10,8 +10,10 @@ using System.Windows.Forms;
 using Microsoft.Win32;
 using Shadowsocks.Model;
 #if !_CONSOLE
+using Shadowsocks.Core;
 using Shadowsocks.View;
 #endif
+
 
 namespace Shadowsocks
 {
@@ -22,9 +24,6 @@ namespace Shadowsocks
         static MenuViewController _viewController;
 #endif
 
-        /// <summary>
-        /// 应用程序的主入口点。
-        /// </summary>
         [STAThread]
         static void Main(string[] args)
         {
@@ -33,19 +32,18 @@ namespace Shadowsocks
             {
                 if (arg == "--setautorun")
                 {
-                    if (!Controller.AutoStartup.Switch())
-                    {
-                        Environment.ExitCode = 1;
-                    }
+                    if (!AutoStartup.Switch())
+	                    Environment.ExitCode = 1;
                     return;
                 }
             }
+
             using (Mutex mutex = new Mutex(false, "Global\\ShadowsocksR_" + Application.StartupPath.GetHashCode()))
             {
                 AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
-                Application.EnableVisualStyles();
                 Application.ApplicationExit += Application_ApplicationExit;
                 SystemEvents.PowerModeChanged += SystemEvents_PowerModeChanged;
+                Application.EnableVisualStyles();
                 Application.SetCompatibleTextRenderingDefault(false);
 
                 if (!mutex.WaitOne(0, false))
@@ -95,9 +93,10 @@ namespace Shadowsocks
 #endif
 #if !_CONSOLE
                 _viewController = new MenuViewController(_controller);
+                ServiceManager.Register(typeof(IMenuClickService), _viewController);
 #endif
 
-            _controller.Start();
+                _controller.Start();
 
 #if !_CONSOLE
                 //Util.Utils.ReleaseMemory();
@@ -110,69 +109,58 @@ namespace Shadowsocks
 #endif
         }
 
+
         private static void SystemEvents_PowerModeChanged(object sender, PowerModeChangedEventArgs e)
         {
             switch (e.Mode)
             {
                 case PowerModes.Resume:
-                    if (_controller != null)
-                    {
-                        System.Timers.Timer timer = new System.Timers.Timer(5 * 1000);
-                        timer.Elapsed += Timer_Elapsed;
-                        timer.AutoReset = false;
-                        timer.Enabled = true;
-                        timer.Start();
-                    }
+                    StartControllerDelayed(5 * 1000);
                     break;
                 case PowerModes.Suspend:
-                    if (_controller != null) _controller.Stop();
+                    _controller?.Stop();
                     break;
             }
         }
 
-        private static void Timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
-        {
-            try
-            {
-                if (_controller != null) _controller.Start();
-            }
-            catch (Exception ex)
-            {
-                Logging.LogUsefulException(ex);
-            }
-            finally
-            {
-                try
-                {
-                    System.Timers.Timer timer = (System.Timers.Timer)sender;
-                    timer.Enabled = false;
-                    timer.Stop();
-                    timer.Dispose();
-                }
-                catch (Exception ex)
-                {
-                    Logging.LogUsefulException(ex);
-                }
-            }
-        }
+		private static void StartControllerDelayed(double interval)
+		{
+			if (_controller == null) return;
 
-        private static void Application_ApplicationExit(object sender, EventArgs e)
+			var timer = new System.Timers.Timer(interval);
+			timer.Elapsed += (sender, e) =>
+			{
+				_controller?.Start();
+				timer.Enabled = false;
+				timer.Stop();
+				timer.Dispose();
+			};
+			timer.AutoReset = false;
+			timer.Enabled = true;
+			timer.Start();
+		}
+
+
+		private static void Application_ApplicationExit(object sender, EventArgs e)
         {
-            if (_controller != null) _controller.Stop();
+            _controller?.Stop();
             _controller = null;
         }
 
-        private static int exited = 0;
-        private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
-        {
-            if (Interlocked.Increment(ref exited) == 1)
-            {
-                Logging.Log(LogLevel.Error, e.ExceptionObject != null ? e.ExceptionObject.ToString() : "");
-                MessageBox.Show(I18N.GetString("Unexpected error, ShadowsocksR will exit.") +
-                    Environment.NewLine + (e.ExceptionObject != null ? e.ExceptionObject.ToString() : ""),
-                    "Shadowsocks Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                Application.Exit();
-            }
-        }
-    }
+
+		private static int _exited = 0;
+		private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+		{
+			if (Interlocked.Increment(ref _exited) != 1) return;
+
+			var es = e.ExceptionObject != null ? e.ExceptionObject.ToString() : "";
+
+			Logging.Log(LogLevel.Error, es);
+
+			MessageBox.Show(I18N.GetString("Unexpected error, ShadowsocksR will exit.") + Environment.NewLine + es,
+				"Shadowsocks Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+			Application.Exit();
+		}
+	}
 }
