@@ -420,7 +420,7 @@ namespace Shadowsocks.Controller
                             s.ServerSpeedLog().AddErrorTimes();
                             if (s.ServerSpeedLog().ErrorConnectTimes >= 3 && cfg.autoSwitchOff)
                             {
-                                s.setEnable(false);
+                                s.enable = false;
                             }
                         }
                     }

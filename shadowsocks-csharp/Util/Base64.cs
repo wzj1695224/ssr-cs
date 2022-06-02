@@ -6,9 +6,9 @@ namespace Shadowsocks.Util
 {
 	public static class Base64
 	{
-		public static byte[] Decode(string val)
+		public static byte[] Decode(string s)
 		{
-			var data = val.PadRight(val.Length + (4 - val.Length % 4) % 4, '=');
+			var data = s.PadRight(s.Length + (4 - s.Length % 4) % 4, '=');
 			return Convert.FromBase64String(data);
 		}
 
@@ -52,7 +52,7 @@ namespace Shadowsocks.Util
 
 		public static string DecodeStandardSSRUrlSafeBase64(string val)
 		{
-			//if (val.IndexOf('=') >= 0)
+			//if (s.IndexOf('=') >= 0)
 			//    throw new FormatException();
 			return Encoding.UTF8.GetString(DecodeUrlSafeBase64ToBytes(val));
 		}

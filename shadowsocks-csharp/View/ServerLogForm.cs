@@ -355,7 +355,7 @@ namespace Shadowsocks.View
                         // Enable
                         if (columnName == "Enable")
                         {
-                            if (server.isEnable())
+                            if (server.enable)
                                 SetBackColor(cell, Color.White);
                             else
                                 SetBackColor(cell, Color.Red);
@@ -879,10 +879,7 @@ namespace Shadowsocks.View
                             {
                                 if (server.group == group)
                                 {
-                                    if (server.enable != enable)
-                                    {
-                                        server.setEnable(enable);
-                                    }
+                                    server.enable = enable;
                                 }
                             }
                             controller.SelectServerIndex(config.index);
@@ -892,7 +889,7 @@ namespace Shadowsocks.View
                     {
                         Configuration config = controller.GetCurrentConfiguration();
                         Server server = config.configs[id];
-                        server.setEnable(!server.isEnable());
+                        server.enable = !server.enable;
                         controller.SelectServerIndex(config.index);
                     }
                     ServerDataGrid[0, row_index].Selected = true;
@@ -927,10 +924,7 @@ namespace Shadowsocks.View
                         {
                             if (server.group == group)
                             {
-                                if (server.enable != enable)
-                                {
-                                    server.setEnable(enable);
-                                }
+                                server.enable = enable;
                             }
                         }
                         controller.SelectServerIndex(config.index);
@@ -940,7 +934,7 @@ namespace Shadowsocks.View
                 {
                     Configuration config = controller.GetCurrentConfiguration();
                     Server server = config.configs[id];
-                    server.setEnable(!server.isEnable());
+                    server.enable = !server.enable;
                     controller.SelectServerIndex(config.index);
                 }
                 ServerDataGrid[0, e.RowIndex].Selected = true;
@@ -980,7 +974,7 @@ namespace Shadowsocks.View
                 {
                     Configuration config = controller.GetCurrentConfiguration();
                     config.configs[id].ServerSpeedLog().Clear();
-                    config.configs[id].setEnable(true);
+                    config.configs[id].enable = true;
                 }
                 if (ServerDataGrid.Columns[e.ColumnIndex].Name == "ConnectError"
                     || ServerDataGrid.Columns[e.ColumnIndex].Name == "ConnectTimeout"
@@ -990,7 +984,7 @@ namespace Shadowsocks.View
                 {
                     Configuration config = controller.GetCurrentConfiguration();
                     config.configs[id].ServerSpeedLog().ClearError();
-                    config.configs[id].setEnable(true);
+                    config.configs[id].enable = true;
                 }
                 ServerDataGrid[0, e.RowIndex].Selected = true;
             }

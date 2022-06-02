@@ -278,7 +278,7 @@ namespace Shadowsocks.Model
                         {
                             for (int i = 0; i < configs.Count; ++i)
                             {
-                                if (configs[selIndex].isEnable())
+                                if (configs[selIndex].enable)
                                 {
                                     break;
                                 }

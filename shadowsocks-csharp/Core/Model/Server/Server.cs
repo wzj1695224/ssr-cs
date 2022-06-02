@@ -221,116 +221,7 @@ namespace Shadowsocks.Core.Model.Server
 			       && password == server.password
 			       && udp_over_tcp == server.udp_over_tcp;
 		}
-
-		private Dictionary<string, string> ParseParam(string param_str)
-		{
-			Dictionary<string, string> params_dict = new Dictionary<string, string>();
-			string[] obfs_params = param_str.Split('&');
-			foreach (string p in obfs_params)
-			{
-				if (p.IndexOf('=') > 0)
-				{
-					int index = p.IndexOf('=');
-					string key, val;
-					key = p.Substring(0, index);
-					val = p.Substring(index + 1);
-					params_dict[key] = val;
-				}
-			}
-			return params_dict;
-		}
-
-		public void ServerFromSSR(string ssrURL, string force_group)
-		{
-			// ssr://host:port:protocol:method:obfs:base64pass/?obfsparam=base64&remarks=base64&group=base64&udpport=0&uot=1
-			Match ssr = Regex.Match(ssrURL, "ssr://([A-Za-z0-9_-]+)", RegexOptions.IgnoreCase);
-			if (!ssr.Success)
-				throw new FormatException();
-
-			string data = Util.Base64.DecodeUrlSafeBase64(ssr.Groups[1].Value);
-			Dictionary<string, string> params_dict = new Dictionary<string, string>();
-
-			Match match = null;
-
-			int param_start_pos = data.IndexOf("?");
-			if (param_start_pos > 0)
-			{
-				params_dict = ParseParam(data.Substring(param_start_pos + 1));
-				data = data.Substring(0, param_start_pos);
-			}
-			if (data.IndexOf("/") >= 0)
-			{
-				data = data.Substring(0, data.LastIndexOf("/"));
-			}
-
-			Regex UrlFinder = new Regex("^(.+):([^:]+):([^:]*):([^:]+):([^:]*):([^:]+)");
-			match = UrlFinder.Match(data);
-
-			if (match == null || !match.Success)
-				throw new FormatException();
-
-			server = match.Groups[1].Value;
-			server_port = ushort.Parse(match.Groups[2].Value);
-			protocol = match.Groups[3].Value.Length == 0 ? "origin" : match.Groups[3].Value;
-			protocol = protocol.Replace("_compatible", "");
-			method = match.Groups[4].Value;
-			obfs = match.Groups[5].Value.Length == 0 ? "plain" : match.Groups[5].Value;
-			obfs = obfs.Replace("_compatible", "");
-			password = Util.Base64.DecodeStandardSSRUrlSafeBase64(match.Groups[6].Value);
-
-			if (params_dict.ContainsKey("protoparam"))
-			{
-				protocolparam = Util.Base64.DecodeStandardSSRUrlSafeBase64(params_dict["protoparam"]);
-			}
-			if (params_dict.ContainsKey("obfsparam"))
-			{
-				obfsparam = Util.Base64.DecodeStandardSSRUrlSafeBase64(params_dict["obfsparam"]);
-			}
-			if (params_dict.ContainsKey("remarks"))
-			{
-				remarks = Util.Base64.DecodeStandardSSRUrlSafeBase64(params_dict["remarks"]);
-			}
-			if (params_dict.ContainsKey("group"))
-			{
-				group = Util.Base64.DecodeStandardSSRUrlSafeBase64(params_dict["group"]);
-			}
-			else
-				group = "";
-			if (params_dict.ContainsKey("uot"))
-			{
-				udp_over_tcp = int.Parse(params_dict["uot"]) != 0;
-			}
-			if (params_dict.ContainsKey("udpport"))
-			{
-				server_udp_port = ushort.Parse(params_dict["udpport"]);
-			}
-			if (!String.IsNullOrEmpty(force_group))
-				group = force_group;
-		}
-
-		public void ServerFromSS(string ssURL, string force_group)
-		{
-			Regex UrlFinder = new Regex("^(?i)ss://([A-Za-z0-9+-/=_]+)(#(.+))?", RegexOptions.IgnoreCase),
-				DetailsParser = new Regex("^((?<method>.+):(?<password>.*)@(?<hostname>.+?)" +
-				                          ":(?<port>\\d+?))$", RegexOptions.IgnoreCase);
-
-			var match = UrlFinder.Match(ssURL);
-			if (!match.Success)
-				throw new FormatException();
-
-			var base64 = match.Groups[1].Value;
-			match = DetailsParser.Match(Encoding.UTF8.GetString(Convert.FromBase64String(
-				base64.PadRight(base64.Length + (4 - base64.Length % 4) % 4, '='))));
-			protocol = "origin";
-			method = match.Groups["method"].Value;
-			password = match.Groups["password"].Value;
-			server = match.Groups["hostname"].Value;
-			server_port = ushort.Parse(match.Groups["port"].Value);
-			if (!String.IsNullOrEmpty(force_group))
-				group = force_group;
-			else
-				group = "";
-		}
+		
 
 		public string GetSSLinkForServer()
 		{
@@ -344,38 +235,19 @@ namespace Shadowsocks.Core.Model.Server
 			string main_part = server + ":" + server_port + ":" + protocol + ":" + method + ":" + obfs + ":" + Util.Base64.EncodeUrlSafeBase64(password);
 			string param_str = "obfsparam=" + Util.Base64.EncodeUrlSafeBase64(obfsparam ?? "");
 			if (!string.IsNullOrEmpty(protocolparam))
-			{
 				param_str += "&protoparam=" + Util.Base64.EncodeUrlSafeBase64(protocolparam);
-			}
 			if (!string.IsNullOrEmpty(remarks))
-			{
 				param_str += "&remarks=" + Util.Base64.EncodeUrlSafeBase64(remarks);
-			}
 			if (!string.IsNullOrEmpty(group))
-			{
 				param_str += "&group=" + Util.Base64.EncodeUrlSafeBase64(group);
-			}
 			if (udp_over_tcp)
-			{
 				param_str += "&uot=" + "1";
-			}
 			if (server_udp_port > 0)
-			{
 				param_str += "&udpport=" + server_udp_port.ToString();
-			}
 			string base64 = Util.Base64.EncodeUrlSafeBase64(main_part + "/?" + param_str);
 			return "ssr://" + base64;
 		}
 
-		public bool isEnable()
-		{
-			return enable;
-		}
-
-		public void setEnable(bool enable)
-		{
-			this.enable = enable;
-		}
 
 		public object getObfsData()
 		{
