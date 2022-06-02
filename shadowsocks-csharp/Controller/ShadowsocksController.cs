@@ -207,7 +207,7 @@ namespace Shadowsocks.Controller
             {
                 try
                 {
-                    var server = new Server(ssURL, force_group);
+                    var server = ServerFactory.Create(ssURL, force_group);
                     if (toLast)
                     {
                         _config.configs.Add(server);

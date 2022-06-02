@@ -206,22 +206,7 @@ namespace Shadowsocks.Core.Model.Server
 			Util.Utils.RandBytes(id, id.Length);
 			this.id = BitConverter.ToString(id).Replace("-", "");
 		}
-
-		public Server(string ssURL, string force_group) : this()
-		{
-			if (ssURL.StartsWith("ss://", StringComparison.OrdinalIgnoreCase))
-			{
-				ServerFromSS(ssURL, force_group);
-			}
-			else if (ssURL.StartsWith("ssr://", StringComparison.OrdinalIgnoreCase))
-			{
-				ServerFromSSR(ssURL, force_group);
-			}
-			else
-			{
-				throw new FormatException();
-			}
-		}
+		
 
 		public bool isMatchServer(Server server)
 		{

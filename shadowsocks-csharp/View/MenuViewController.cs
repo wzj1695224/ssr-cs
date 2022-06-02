@@ -338,14 +338,7 @@ namespace Shadowsocks.View
                 // get current group
                 var curGroup = urls
                     // parse group
-                    .Select(url =>
-                    {
-                        try
-                        {
-                            return new Server(url, null).group;
-                        }
-                        catch { return null; }
-                    })
+                    .Select(url => ServerFactory.Create(url, null, false)?.group)
                     .First(group => !string.IsNullOrEmpty(group));
                 if (string.IsNullOrEmpty(curGroup))
                     curGroup = subscribeUrl;
@@ -370,14 +363,7 @@ namespace Shadowsocks.View
                 if (keepSelectedServer && selectedServer != null && selectedServer.group == curGroup)
                 {
                     var anyMatch = urls
-                        .Select(url =>
-                        {
-                            try
-                            {
-                                return new Server(url, null);
-                            }
-                            catch { return null; }
-                        })
+                        .Select(url => ServerFactory.Create(url, null, false))
                         .Where(a => a != null)
                         .FirstOrDefault(server => selectedServer.isMatchServer(server)) != null;
 
@@ -413,7 +399,7 @@ namespace Shadowsocks.View
                         {
                             try
                             {
-                                Server server = new Server(url, curGroup);
+                                Server server = ServerFactory.Create(url, curGroup);
                                 bool match = false;
                                 if (!match)
                                 {

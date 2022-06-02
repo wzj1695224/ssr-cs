@@ -147,6 +147,7 @@
     <Compile Include="Controller\ProxyAuth.cs" />
     <Compile Include="Core\EventBus.cs" />
     <Compile Include="Core\Model\Server\Server.cs" />
+    <Compile Include="Core\Model\Server\ServerFactory.cs" />
     <Compile Include="Core\ProxyMode.cs" />
     <Compile Include="Controller\ProxySocket.cs" />
     <Compile Include="Controller\Socks5Forwarder.cs" />
