@@ -45,23 +45,27 @@ namespace Shadowsocks.View
 
         private NotifyIcon _notifyIcon;
 
-        private MenuItem noModifyItem;
-        private MenuItem enableItem;
-        private MenuItem PACModeItem;
-        private MenuItem globalModeItem;
-        private MenuItem modeItem;
+        // Mode menu
+        private MenuItem _modeNoModifyMenu;
+        private MenuItem _modeDisableMenu;
+        private MenuItem _modePacMenu;
+        private MenuItem _modeGlobalMenu;
 
-        private MenuItem ruleBypassLan;
-        private MenuItem ruleBypassChina;
-        private MenuItem ruleBypassNotChina;
-        private MenuItem ruleUser;
-        private MenuItem ruleDisableBypass;
+        // Proxy rule
+        private MenuItem _ruleBypassLan;
+        private MenuItem _ruleBypassChina;
+        private MenuItem _ruleBypassNotChina;
+        private MenuItem _ruleUser;
+        private MenuItem _ruleDisableBypass;
 
+        // Servers
+        private MenuItem _serversMenu;
         private MenuItem SeperatorItem;
-        private MenuItem ServersItem;
-        private MenuItem SelectRandomItem;
-        private MenuItem sameHostForSameTargetItem;
-        private MenuItem UpdateItem;
+        private MenuItem _servSameHostMenu;
+
+        private MenuItem _LoadBalanceMenu;
+        private MenuItem _doUpdateMenu;
+
         private ConfigForm configForm;
         private SettingsForm settingsForm;
         private ServerLogForm serverLogForm;
@@ -94,7 +98,7 @@ namespace Shadowsocks.View
             _notifyIcon = new NotifyIcon();
             UpdateTrayIcon();
             _notifyIcon.Visible = true;
-            _notifyIcon.ContextMenu = CreateContextMenu();
+            _notifyIcon.ContextMenu = LoadContextMenu();
             _notifyIcon.MouseClick += notifyIcon1_Click;
             //_notifyIcon.MouseDoubleClick += notifyIcon1_DoubleClick;
 
@@ -222,93 +226,130 @@ namespace Shadowsocks.View
             _notifyIcon.Text = text.Substring(0, Math.Min(63, text.Length));
         }
 
-        private MenuItem CreateMenuItem(string text, EventHandler click)
+
+        private static MenuItem CreateMenuItem(string text, EventHandler click)
         {
             return new MenuItem(I18N.GetString(text), click);
         }
 
-        private MenuItem CreateMenuGroup(string text, MenuItem[] items)
+        private static MenuItem CreateMenuGroup(string text, params MenuItem[] items)
         {
             return new MenuItem(I18N.GetString(text), items);
         }
 
 
-        private ContextMenu CreateContextMenu()
+        private ContextMenu LoadContextMenu()
         {
+	        // Mode submenu
+	        _modeDisableMenu    = CreateMenuItem("Disable system proxy",       EnableItem_Click );
+	        _modePacMenu        = CreateMenuItem("PAC",                        PACModeItem_Click );
+	        _modeGlobalMenu     = CreateMenuItem("Global",                     GlobalModeItem_Click );
+	        _modeNoModifyMenu   = CreateMenuItem("No modify system proxy",     NoModifyItem_Click );
+
+            // Proxy rule submenu
+            _ruleBypassLan      = CreateMenuItem("Bypass LAN",                 RuleBypassLanItem_Click);
+            _ruleBypassChina    = CreateMenuItem("Bypass LAN && China",        RuleBypassChinaItem_Click);
+            _ruleBypassNotChina = CreateMenuItem("Bypass LAN && not China",    RuleBypassNotChinaItem_Click);
+            _ruleUser           = CreateMenuItem("User custom",                RuleUserItem_Click);
+            _ruleDisableBypass  = CreateMenuItem("Disable bypass",             RuleBypassDisableItem_Click);
+
+            // Servers submenu
+            _servSameHostMenu   = CreateMenuItem("Same host for same address", SelectSameHostForSameTargetItem_Click);
+
+            // others
+            _LoadBalanceMenu    = CreateMenuItem("Load balance",               SelectRandomItem_Click);
+            _doUpdateMenu       = CreateMenuItem("Update available",           UpdateItem_Clicked);
+
+            // do some config
+            _doUpdateMenu.Visible = false;
+
             return new ContextMenu(new MenuItem[] {
                 // Mode
-                modeItem = CreateMenuGroup("Mode", new MenuItem[] {
-                    enableItem = CreateMenuItem("Disable system proxy", new EventHandler(this.EnableItem_Click)),
-                    PACModeItem = CreateMenuItem("PAC", new EventHandler(this.PACModeItem_Click)),
-                    globalModeItem = CreateMenuItem("Global", new EventHandler(this.GlobalModeItem_Click)),
+                CreateMenuGroup("Mode", new MenuItem[] {
+	                _modeDisableMenu,
+	                _modePacMenu,
+	                _modeGlobalMenu,
                     new MenuItem("-"),
-                    noModifyItem = CreateMenuItem("No modify system proxy", new EventHandler(this.NoModifyItem_Click))
+                    _modeNoModifyMenu
                 }),
 
                 // PAC
                 CreateMenuGroup("PAC ", new MenuItem[] {
-                    CreateMenuItem("Update local PAC from Lan IP list", new EventHandler(this.UpdatePACFromLanIPListItem_Click)),
+                    CreateMenuItem("Update local PAC from Lan IP list",    UpdatePACFromLanIPListItem_Click),
                     new MenuItem("-"),
-                    CreateMenuItem("Update local PAC from Chn White list", new EventHandler(this.UpdatePACFromCNWhiteListItem_Click)),
-                    CreateMenuItem("Update local PAC from Chn IP list", new EventHandler(this.UpdatePACFromCNIPListItem_Click)),
-                    CreateMenuItem("Update local PAC from GFWList", new EventHandler(this.UpdatePACFromGFWListItem_Click)),
+                    CreateMenuItem("Update local PAC from Chn White list", UpdatePACFromCNWhiteListItem_Click),
+                    CreateMenuItem("Update local PAC from Chn IP list",    UpdatePACFromCNIPListItem_Click),
+                    CreateMenuItem("Update local PAC from GFWList",        UpdatePACFromGFWListItem_Click),
                     new MenuItem("-"),
-                    CreateMenuItem("Update local PAC from Chn Only list", new EventHandler(this.UpdatePACFromCNOnlyListItem_Click)),
+                    CreateMenuItem("Update local PAC from Chn Only list",  UpdatePACFromCNOnlyListItem_Click),
                     new MenuItem("-"),
-                    CreateMenuItem("Copy PAC URL", new EventHandler(this.CopyPACURLItem_Click)),
-                    CreateMenuItem("Edit local PAC file...", new EventHandler(this.EditPACFileItem_Click)),
-                    CreateMenuItem("Edit user rule for GFWList...", new EventHandler(this.EditUserRuleFileForGFWListItem_Click)),
+                    CreateMenuItem("Copy PAC URL",                         CopyPACURLItem_Click),
+                    CreateMenuItem("Edit local PAC file...",               EditPACFileItem_Click),
+                    CreateMenuItem("Edit user rule for GFWList...",        EditUserRuleFileForGFWListItem_Click),
                 }),
 
                 // Proxy rule
                 CreateMenuGroup("Proxy rule", new MenuItem[] {
-                    ruleBypassLan = CreateMenuItem("Bypass LAN", new EventHandler(this.RuleBypassLanItem_Click)),
-                    ruleBypassChina = CreateMenuItem("Bypass LAN && China", new EventHandler(this.RuleBypassChinaItem_Click)),
-                    ruleBypassNotChina = CreateMenuItem("Bypass LAN && not China", new EventHandler(this.RuleBypassNotChinaItem_Click)),
-                    ruleUser = CreateMenuItem("User custom", new EventHandler(this.RuleUserItem_Click)),
+                    _ruleBypassLan,
+                    _ruleBypassChina,
+                    _ruleBypassNotChina,
+                    _ruleUser,
                     new MenuItem("-"),
-                    ruleDisableBypass = CreateMenuItem("Disable bypass", new EventHandler(this.RuleBypassDisableItem_Click)),
+                    _ruleDisableBypass
                 }),
+
                 new MenuItem("-"),
-                ServersItem = CreateMenuGroup("Servers", new MenuItem[] {
+                
+                // Servers
+                _serversMenu = CreateMenuGroup("Servers", new MenuItem[] {
                     SeperatorItem = new MenuItem("-"),
-                    CreateMenuItem("Edit servers...", new EventHandler(this.Config_Click)),
-                    CreateMenuItem("Import servers from file...", new EventHandler(this.Import_Click)),
+                    CreateMenuItem("Edit servers...",             Config_Click),
+                    CreateMenuItem("Import servers from file...", Import_Click),
                     new MenuItem("-"),
-                    sameHostForSameTargetItem = CreateMenuItem("Same host for same address", new EventHandler(this.SelectSameHostForSameTargetItem_Click)),
+                    _servSameHostMenu,
                     new MenuItem("-"),
-                    CreateMenuItem("Server statistic...", new EventHandler(this.ShowServerLogItem_Click)),
-                    CreateMenuItem("Disconnect current", new EventHandler(this.DisconnectCurrent_Click)),
+                    CreateMenuItem("Server statistic...",         ShowServerLogItem_Click),
+                    CreateMenuItem("Disconnect current",          DisconnectCurrent_Click),
                 }),
+
+                // Servers Subscribe
                 CreateMenuGroup("Servers Subscribe", new MenuItem[] {
-                    CreateMenuItem("Subscribe setting...", new EventHandler(this.SubscribeSetting_Click)),
-                    CreateMenuItem("Update subscribe SSR node", new EventHandler(this.CheckNodeUpdate_Click)),
-                    CreateMenuItem("Update subscribe SSR node(bypass proxy)", new EventHandler(this.CheckNodeUpdateBypassProxy_Click)),
+                    CreateMenuItem("Subscribe setting...",                    SubscribeSetting_Click),
+                    CreateMenuItem("Update subscribe SSR node",               CheckNodeUpdate_Click),
+                    CreateMenuItem("Update subscribe SSR node(bypass proxy)", CheckNodeUpdateBypassProxy_Click),
                 }),
-                SelectRandomItem = CreateMenuItem("Load balance", new EventHandler(this.SelectRandomItem_Click)),
-                CreateMenuItem("Global settings...", new EventHandler(this.Setting_Click)),
-                CreateMenuItem("Port settings...", new EventHandler(this.ShowPortMapItem_Click)),
-                UpdateItem = CreateMenuItem("Update available", new EventHandler(this.UpdateItem_Clicked)),
+
+                _LoadBalanceMenu,
+
+                CreateMenuItem("Global settings...", Setting_Click),
+                CreateMenuItem("Port settings...",   ShowPortMapItem_Click),
+                
+                _doUpdateMenu,
+
                 new MenuItem("-"),
-                CreateMenuItem("Scan QRCode from screen...", new EventHandler(this.ScanQRCodeItem_Click)),
-                CreateMenuItem("Import SSR links from clipboard...", new EventHandler(this.CopyAddress_Click)),
+
+                CreateMenuItem("Scan QRCode from screen...",         ScanQRCodeItem_Click),
+                CreateMenuItem("Import SSR links from clipboard...", CopyAddress_Click),
+
                 new MenuItem("-"),
+
                 CreateMenuGroup("Help", new MenuItem[] {
-                    CreateMenuItem("Check update", new EventHandler(this.CheckUpdate_Click)),
-                    CreateMenuItem("Show logs...", new EventHandler(this.ShowLogItem_Click)),
-                    CreateMenuItem("Open wiki...", new EventHandler(this.OpenWiki_Click)),
-                    CreateMenuItem("Feedback...", new EventHandler(this.FeedbackItem_Click)),
+                    CreateMenuItem("Check update",         CheckUpdate_Click),
+                    CreateMenuItem("Show logs...",         ShowLogItem_Click),
+                    CreateMenuItem("Open wiki...",         OpenWiki_Click),
+                    CreateMenuItem("Feedback...",          FeedbackItem_Click),
                     new MenuItem("-"),
-                    CreateMenuItem("Gen custom QRCode...", new EventHandler(this.showURLFromQRCode)),
-                    CreateMenuItem("Reset password...", new EventHandler(this.ResetPasswordItem_Click)),
+                    CreateMenuItem("Gen custom QRCode...", showURLFromQRCode),
+                    CreateMenuItem("Reset password...",    ResetPasswordItem_Click),
                     new MenuItem("-"),
-                    CreateMenuItem("About...", new EventHandler(this.AboutItem_Click)),
-                    CreateMenuItem("Donate...", new EventHandler(this.DonateItem_Click)),
+                    CreateMenuItem("About...",             AboutItem_Click),
+                    CreateMenuItem("Donate...",            DonateItem_Click),
                 }),
-                CreateMenuItem("Quit", new EventHandler(this.Quit_Click))
+
+                CreateMenuItem("Quit", Quit_Click)
             });
-            this.UpdateItem.Visible = false;
         }
+
 
         private void controller_ConfigChanged(object sender, EventArgs e)
         {
@@ -631,7 +672,7 @@ namespace Shadowsocks.View
             }
             else
             {
-                if (!this.UpdateItem.Visible)
+                if (!this._doUpdateMenu.Visible)
                 {
                     ShowBalloonTip(String.Format(I18N.GetString("{0} {1} Update Found"), UpdateChecker.Name, updateChecker.LatestVersionNumber),
                         I18N.GetString("Click menu to download"), ToolTipIcon.Info, 10000);
@@ -641,8 +682,8 @@ namespace Shadowsocks.View
                     timerDelayCheckUpdate.Stop();
                     timerDelayCheckUpdate = null;
                 }
-                this.UpdateItem.Visible = true;
-                this.UpdateItem.Text = String.Format(I18N.GetString("New version {0} {1} available"), UpdateChecker.Name, updateChecker.LatestVersionNumber);
+                this._doUpdateMenu.Visible = true;
+                this._doUpdateMenu.Text = String.Format(I18N.GetString("New version {0} {1} available"), UpdateChecker.Name, updateChecker.LatestVersionNumber);
             }
         }
 
@@ -659,19 +700,19 @@ namespace Shadowsocks.View
 
         private void UpdateSysProxyMode(Configuration config)
         {
-            noModifyItem.Checked = config.sysProxyMode == (int)ProxyMode.NoModify;
-            enableItem.Checked = config.sysProxyMode == (int)ProxyMode.Direct;
-            PACModeItem.Checked = config.sysProxyMode == (int)ProxyMode.Pac;
-            globalModeItem.Checked = config.sysProxyMode == (int)ProxyMode.Global;
+            _modeNoModifyMenu.Checked = config.sysProxyMode == (int)ProxyMode.NoModify;
+            _modeDisableMenu.Checked = config.sysProxyMode == (int)ProxyMode.Direct;
+            _modePacMenu.Checked = config.sysProxyMode == (int)ProxyMode.Pac;
+            _modeGlobalMenu.Checked = config.sysProxyMode == (int)ProxyMode.Global;
         }
 
         private void UpdateProxyRule(Configuration config)
         {
-            ruleDisableBypass.Checked = config.proxyRuleMode == (int)ProxyRuleMode.Disable;
-            ruleBypassLan.Checked = config.proxyRuleMode == (int)ProxyRuleMode.BypassLan;
-            ruleBypassChina.Checked = config.proxyRuleMode == (int)ProxyRuleMode.BypassLanAndChina;
-            ruleBypassNotChina.Checked = config.proxyRuleMode == (int)ProxyRuleMode.BypassLanAndNotChina;
-            ruleUser.Checked = config.proxyRuleMode == (int)ProxyRuleMode.UserCustom;
+            _ruleDisableBypass.Checked = config.proxyRuleMode == (int)ProxyRuleMode.Disable;
+            _ruleBypassLan.Checked = config.proxyRuleMode == (int)ProxyRuleMode.BypassLan;
+            _ruleBypassChina.Checked = config.proxyRuleMode == (int)ProxyRuleMode.BypassLanAndChina;
+            _ruleBypassNotChina.Checked = config.proxyRuleMode == (int)ProxyRuleMode.BypassLanAndNotChina;
+            _ruleUser.Checked = config.proxyRuleMode == (int)ProxyRuleMode.UserCustom;
         }
 
         private void LoadCurrentConfiguration()
@@ -682,13 +723,13 @@ namespace Shadowsocks.View
 
             UpdateProxyRule(config);
 
-            SelectRandomItem.Checked = config.random;
-            sameHostForSameTargetItem.Checked = config.sameHostForSameTarget;
+            _LoadBalanceMenu.Checked = config.random;
+            _servSameHostMenu.Checked = config.sameHostForSameTarget;
         }
 
         private void UpdateServersMenu()
         {
-            var items = ServersItem.MenuItems;
+            var items = _serversMenu.MenuItems;
             while (items[0] != SeperatorItem)
             {
                 items.RemoveAt(0);
@@ -1099,14 +1140,14 @@ namespace Shadowsocks.View
 
         private void SelectRandomItem_Click(object sender, EventArgs e)
         {
-            SelectRandomItem.Checked = !SelectRandomItem.Checked;
-            controller.ToggleSelectRandom(SelectRandomItem.Checked);
+            _LoadBalanceMenu.Checked = !_LoadBalanceMenu.Checked;
+            controller.ToggleSelectRandom(_LoadBalanceMenu.Checked);
         }
 
         private void SelectSameHostForSameTargetItem_Click(object sender, EventArgs e)
         {
-            sameHostForSameTargetItem.Checked = !sameHostForSameTargetItem.Checked;
-            controller.ToggleSameHostForSameTargetRandom(sameHostForSameTargetItem.Checked);
+            _servSameHostMenu.Checked = !_servSameHostMenu.Checked;
+            controller.ToggleSameHostForSameTargetRandom(_servSameHostMenu.Checked);
         }
 
         private void CopyPACURLItem_Click(object sender, EventArgs e)
