@@ -1,7 +1,10 @@
 ﻿using Shadowsocks.Model;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Net;
+using System.Text.RegularExpressions;
+using Shadowsocks.View;
 
 
 namespace Shadowsocks.Controller
@@ -58,6 +61,12 @@ namespace Shadowsocks.Controller
                 NewFreeNodeFound?.Invoke(this, EventArgs.Empty);
             }
         }
+
+
+        public SubscribeResult ParseResult()
+        {
+            return SubscribeResult.Parse(FreeNodeResult);
+        }
     }
 
 
@@ -107,6 +116,58 @@ namespace Shadowsocks.Controller
             _serverSubscribes.RemoveAt(0);
             return true;
         }
-
     }
+
+
+
+
+
+    public class SubscribeResult
+    {
+        public readonly List<string> Urls;
+        public readonly int MaxNode;
+
+
+        private SubscribeResult(List<string> urls, int maxNode)
+        {
+	        Urls = urls;
+	        MaxNode = maxNode;
+        }
+
+
+        public static SubscribeResult Parse(string result)
+        {
+            if ( string.IsNullOrEmpty(result) ) return null;
+
+            result = result.TrimEnd('\r', '\n', ' ');
+
+            // decode
+            result = Util.Base64.DecodeToString(result, null);
+            if (string.IsNullOrEmpty(result)) return null;
+
+            // TODO refactoring
+            var urls = new List<string>();
+            MenuViewController.URL_Split(result, ref urls);
+
+            var maxNode = ParseMaxNode(result);
+            return new SubscribeResult(urls, maxNode);
+        }
+
+
+        private static int ParseMaxNode(string result, int def = -1)
+        {
+            var match = Regex.Match(result, "^MAX=([0-9]+)");
+            if (!match.Success) return def;
+
+            try
+            {
+                return Convert.ToInt32(match.Groups[1].Value, 10);
+            }
+            catch
+            {
+                return -1;
+            }
+        }
+    }
+
 }

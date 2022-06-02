@@ -319,19 +319,16 @@ namespace Shadowsocks.Model
 
         public bool isMatchServer(Server server)
         {
-            if (this.server == server.server
-                && server_port == server.server_port
-                && server_udp_port == server.server_udp_port
-                && method == server.method
-                && protocol == server.protocol
-                && protocolparam == server.protocolparam
-                && obfs == server.obfs
-                && obfsparam == server.obfsparam
-                && password == server.password
-                && udp_over_tcp == server.udp_over_tcp
-                )
-                return true;
-            return false;
+	        return this.server == server.server
+	               && server_port == server.server_port
+	               && server_udp_port == server.server_udp_port
+	               && method == server.method
+	               && protocol == server.protocol
+	               && protocolparam == server.protocolparam
+	               && obfs == server.obfs
+	               && obfsparam == server.obfsparam
+	               && password == server.password
+	               && udp_over_tcp == server.udp_over_tcp;
         }
 
         private Dictionary<string, string> ParseParam(string param_str)

@@ -640,9 +640,7 @@ namespace Shadowsocks.Model
 
         public bool isDefaultConfig()
         {
-            if (configs.Count == 1 && configs[0].server == Configuration.GetDefaultServer().server)
-                return true;
-            return false;
+	        return configs.Count == 1 && configs[0].server == Configuration.GetDefaultServer().server;
         }
 
         public static Server CopyServer(Server server)

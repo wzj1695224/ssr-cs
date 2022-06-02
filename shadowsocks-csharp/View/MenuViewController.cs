@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -307,134 +308,106 @@ namespace Shadowsocks.View
                 return;
             }
 
+            var config = controller.GetCurrentConfiguration();
+            var subscribeUrl = updateSubscribeManager.Url;
+
+            // parse result
+            var result = updateFreeNodeChecker.ParseResult();
+            var maxNode = result?.MaxNode;
+            var urls = result?.Urls
+			    .Where(url => url.StartsWith("ssr"))
+			    .Reverse()
+			    .ToList();
+
             string lastGroup = null;
             int count = 0;
-            if (!String.IsNullOrEmpty(updateFreeNodeChecker.FreeNodeResult))
+            if (urls?.Count > 0)
             {
-                List<string> urls = new List<string>();
-                updateFreeNodeChecker.FreeNodeResult = updateFreeNodeChecker.FreeNodeResult.TrimEnd('\r', '\n', ' ');
-                Configuration config = controller.GetCurrentConfiguration();
-                Server selected_server = null;
+	            var keepSelectedServer = false; // set 'false' if import all nodes
+
+                // shrink servers if needy
+                if (maxNode > 0 && maxNode < urls.Count)
+                {
+                    Util.Utils.Shuffle(urls, new Random());
+                    urls.RemoveRange(result.MaxNode, urls.Count - result.MaxNode);
+                    keepSelectedServer = !config.isDefaultConfig();
+                }
+
+                // get current group
+                var curGroup = urls
+                    // parse group
+                    .Select(url =>
+                    {
+                        try
+                        {
+                            return new Server(url, null).group;
+                        }
+                        catch { return null; }
+                    })
+                    .First(group => !string.IsNullOrEmpty(group));
+                if (string.IsNullOrEmpty(curGroup))
+                    curGroup = subscribeUrl;
+
+                // update subscribe group & save the group
+                var subInfo = config.serverSubscribes
+                    .FirstOrDefault(sub => sub.URL == subscribeUrl);
+                if (subInfo != null)
+                {
+                    lastGroup = subInfo.Group;
+                    subInfo.Group = curGroup;
+                }
+                if (string.IsNullOrEmpty(lastGroup))
+                    lastGroup = curGroup;
+
+                // get selected server
+                Server selectedServer = null;
                 if (config.index >= 0 && config.index < config.configs.Count)
-                {
-                    selected_server = config.configs[config.index];
-                }
-                try
-                {
-                    updateFreeNodeChecker.FreeNodeResult = Util.Base64.DecodeBase64(updateFreeNodeChecker.FreeNodeResult);
-                }
-                catch
-                {
-                    updateFreeNodeChecker.FreeNodeResult = "";
-                }
-                int max_node_num = 0;
+                    selectedServer = config.configs[config.index];
 
-                Match match_maxnum = Regex.Match(updateFreeNodeChecker.FreeNodeResult, "^MAX=([0-9]+)");
-                if (match_maxnum.Success)
+                // do something for keep selected server
+                if (keepSelectedServer && selectedServer != null && selectedServer.group == curGroup)
                 {
-                    try
-                    {
-                        max_node_num = Convert.ToInt32(match_maxnum.Groups[1].Value, 10);
-                    }
-                    catch
-                    {
-
-                    }
-                }
-                URL_Split(updateFreeNodeChecker.FreeNodeResult, ref urls);
-                for (int i = urls.Count - 1; i >= 0; --i)
-                {
-                    if (!urls[i].StartsWith("ssr"))
-                        urls.RemoveAt(i);
-                }
-                if (urls.Count > 0)
-                {
-                    bool keep_selected_server = false; // set 'false' if import all nodes
-                    if (max_node_num <= 0 || max_node_num >= urls.Count)
-                    {
-                        urls.Reverse();
-                    }
-                    else
-                    {
-                        Random r = new Random();
-                        Util.Utils.Shuffle(urls, r);
-                        urls.RemoveRange(max_node_num, urls.Count - max_node_num);
-                        if (!config.isDefaultConfig())
-                            keep_selected_server = true;
-                    }
-                    string curGroup = null;
-                    foreach (string url in urls)
-                    {
-                        try // try get group name
-                        {
-                            Server server = new Server(url, null);
-                            if (!String.IsNullOrEmpty(server.group))
-                            {
-                                curGroup = server.group;
-                                break;
-                            }
-                        }
-                        catch
-                        { }
-                    }
-                    string subscribeURL = updateSubscribeManager.Url;
-                    if (String.IsNullOrEmpty(curGroup))
-                    {
-                        curGroup = subscribeURL;
-                    }
-                    for (int i = 0; i < config.serverSubscribes.Count; ++i)
-                    {
-                        if (subscribeURL == config.serverSubscribes[i].URL)
-                        {
-                            lastGroup = config.serverSubscribes[i].Group;
-                            config.serverSubscribes[i].Group = curGroup;
-                            break;
-                        }
-                    }
-                    if (String.IsNullOrEmpty(lastGroup))
-                    {
-                        lastGroup = curGroup;
-                    }
-
-                    if (keep_selected_server && selected_server.group == curGroup)
-                    {
-                        bool match = false;
-                        for (int i = 0; i < urls.Count; ++i)
+                    var anyMatch = urls
+                        .Select(url =>
                         {
                             try
                             {
-                                Server server = new Server(urls[i], null);
-                                if (selected_server.isMatchServer(server))
-                                {
-                                    match = true;
-                                    break;
-                                }
+                                return new Server(url, null);
                             }
-                            catch
-                            { }
-                        }
-                        if (!match)
-                        {
-                            urls.RemoveAt(0);
-                            urls.Add(selected_server.GetSSRLinkForServer());
-                        }
-                    }
+                            catch { return null; }
+                        })
+                        .Where(a => a != null)
+                        .FirstOrDefault(server => selectedServer.isMatchServer(server)) != null;
 
-                    // import all, find difference
+                    // if selected server not existed in new list, add it
+                    if (!anyMatch)
                     {
-                        Dictionary<string, Server> old_servers = new Dictionary<string, Server>();
-                        Dictionary<string, Server> old_insert_servers = new Dictionary<string, Server>();
-                        if (!String.IsNullOrEmpty(lastGroup))
+                        // remove one if we oversize
+                        if (maxNode > 0 && maxNode < urls.Count - 1)
+                            urls.RemoveAt(0);
+
+                        urls.Add(selectedServer.GetSSRLinkForServer());
+                    }
+                }
+
+                // TODO refactor
+                if (urls.Count > 0)
+                {
+	                // import all, find difference
+                    {
+                        var oldServers = new Dictionary<string, Server>();
+                        var old_insert_servers = new Dictionary<string, Server>();
+
+                        // find servers in this group
+                        if (!string.IsNullOrEmpty(lastGroup))
                         {
-                            for (int i = config.configs.Count - 1; i >= 0; --i)
-                            {
-                                if (lastGroup == config.configs[i].group)
-                                {
-                                    old_servers[config.configs[i].id] = config.configs[i];
-                                }
-                            }
+                            config.configs
+	                            .Where(server => server.group == lastGroup)
+	                            .ToList()
+	                            .ForEach(server => oldServers[server.id] = server);
                         }
-                        foreach (string url in urls)
+
+                        foreach (var url in urls)
                         {
                             try
                             {
@@ -454,12 +427,12 @@ namespace Shadowsocks.View
                                 old_insert_servers[server.id] = server;
                                 if (!match)
                                 {
-                                    foreach (KeyValuePair<string, Server> pair in old_servers)
+                                    foreach (KeyValuePair<string, Server> pair in oldServers)
                                     {
                                         if (server.isMatchServer(pair.Value))
                                         {
                                             match = true;
-                                            old_servers.Remove(pair.Key);
+                                            oldServers.Remove(pair.Key);
                                             pair.Value.CopyServerInfo(server);
                                             ++count;
                                             break;
@@ -484,7 +457,7 @@ namespace Shadowsocks.View
                             catch
                             { }
                         }
-                        foreach (KeyValuePair<string, Server> pair in old_servers)
+                        foreach (KeyValuePair<string, Server> pair in oldServers)
                         {
                             for (int i = config.configs.Count - 1; i >= 0; --i)
                             {
@@ -498,20 +471,20 @@ namespace Shadowsocks.View
                         controller.SaveServersConfig(config);
                     }
                     config = controller.GetCurrentConfiguration();
-                    if (selected_server != null)
+                    if (selectedServer != null)
                     {
                         bool match = false;
                         for (int i = config.configs.Count - 1; i >= 0; --i)
                         {
-                            if (config.configs[i].id == selected_server.id)
+                            if (config.configs[i].id == selectedServer.id)
                             {
                                 config.index = i;
                                 match = true;
                                 break;
                             }
-                            else if (config.configs[i].group == selected_server.group)
+                            else if (config.configs[i].group == selectedServer.group)
                             {
-                                if (config.configs[i].isMatchServer(selected_server))
+                                if (config.configs[i].isMatchServer(selectedServer))
                                 {
                                     config.index = i;
                                     match = true;
@@ -1033,7 +1006,7 @@ namespace Shadowsocks.View
             controller.DisconnectAllConnections();
         }
 
-        private void URL_Split(string text, ref List<string> out_urls)
+        public static void URL_Split(string text, ref List<string> out_urls)
         {
             if (String.IsNullOrEmpty(text))
             {
