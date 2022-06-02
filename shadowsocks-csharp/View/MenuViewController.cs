@@ -13,7 +13,7 @@ using Shadowsocks.Core;
 using ZXing;
 using ZXing.Common;
 using ZXing.QrCode;
-using ProxyMode = Shadowsocks.Controller.ProxyMode;
+
 
 namespace Shadowsocks.View
 {
@@ -81,6 +81,7 @@ namespace Shadowsocks.View
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
         static extern bool DestroyIcon(IntPtr handle);
 
+
         public MenuViewController(ShadowsocksController controller)
         {
             this.controller = controller;
@@ -146,85 +147,31 @@ namespace Shadowsocks.View
 
         private void UpdateTrayIcon()
         {
-            int dpi = 96;
-            using (Graphics graphics = Graphics.FromHwnd(IntPtr.Zero))
-            {
-                dpi = (int)graphics.DpiX;
-            }
-            Configuration config = controller.GetCurrentConfiguration();
-            bool enabled = config.sysProxyMode != (int)ProxyMode.NoModify && config.sysProxyMode != (int)ProxyMode.Direct;
-            bool global = config.sysProxyMode == (int)ProxyMode.Global;
-            bool random = config.random;
+			var config = controller.GetCurrentConfiguration();
+			var proxyMode = (ProxyMode) config.sysProxyMode;
 
             try
             {
-                Bitmap icon = new Bitmap("icon.png");
-                Icon newIcon = Icon.FromHandle(icon.GetHicon());
-                icon.Dispose();
-                _notifyIcon.Icon = newIcon;
+	            _notifyIcon.Icon = ResourceFactory.CreateStaticTrayIcon();
             }
             catch
             {
-                Bitmap icon = null;
-                if (dpi < 97)
-                {
-                    // dpi = 96;
-                    icon = Resources.ss16;
-                }
-                else if (dpi < 121)
-                {
-                    // dpi = 120;
-                    icon = Resources.ss20;
-                }
-                else
-                {
-                    icon = Resources.ss24;
-                }
-                double mul_a = 1.0, mul_r = 1.0, mul_g = 1.0, mul_b = 1.0;
-                if (!enabled)
-                {
-                    mul_g = 0.4;
-                }
-                else if (!global)
-                {
-                    mul_b = 0.4;
-                    mul_g = 0.8;
-                }
-                if (!random)
-                {
-                    mul_r = 0.4;
-                }
-
-                Bitmap iconCopy = new Bitmap(icon);
-                for (int x = 0; x < iconCopy.Width; x++)
-                {
-                    for (int y = 0; y < iconCopy.Height; y++)
-                    {
-                        Color color = icon.GetPixel(x, y);
-                        iconCopy.SetPixel(x, y,
-
-                            Color.FromArgb((byte)(color.A * mul_a),
-                            ((byte)(color.R * mul_r)),
-                            ((byte)(color.G * mul_g)),
-                            ((byte)(color.B * mul_b))));
-                    }
-                }
-                Icon newIcon = Icon.FromHandle(iconCopy.GetHicon());
-                icon.Dispose();
-                iconCopy.Dispose();
-
-                _notifyIcon.Icon = newIcon;
+                _notifyIcon.Icon = ResourceFactory.CreateTrayIcon(proxyMode, config.random);
             }
+            
+            string text;
+            if (proxyMode == ProxyMode.Global)
+                text = I18N.GetString("Global");
+            else if (proxyMode == ProxyMode.Pac)
+                text = I18N.GetString("PAC");
+            else
+                text = I18N.GetString("Disable system proxy");
 
-            // we want to show more details but notify icon title is limited to 63 characters
-            string text = (enabled ?
-                    (global ? I18N.GetString("Global") : I18N.GetString("PAC")) :
-                    I18N.GetString("Disable system proxy"))
-                    + "\r\n"
-                    + String.Format(I18N.GetString("Running: Port {0}"), config.localPort)  // this feedback is very important because they need to know Shadowsocks is running
-                    ;
+            text += "\r\n" + String.Format(I18N.GetString("Running: Port {0}"), config.localPort);
+
             _notifyIcon.Text = text.Substring(0, Math.Min(63, text.Length));
         }
+
 
 
         private static MenuItem CreateMenuItem(string text, EventHandler click)
@@ -232,7 +179,7 @@ namespace Shadowsocks.View
             return new MenuItem(I18N.GetString(text), click);
         }
 
-        private static MenuItem CreateMenuGroup(string text, params MenuItem[] items)
+        private static MenuItem CreateMenuGroup(string text, MenuItem[] items)
         {
             return new MenuItem(I18N.GetString(text), items);
         }
@@ -263,9 +210,9 @@ namespace Shadowsocks.View
             // do some config
             _doUpdateMenu.Visible = false;
 
-            return new ContextMenu(new MenuItem[] {
+            return new ContextMenu(new[] {
                 // Mode
-                CreateMenuGroup("Mode", new MenuItem[] {
+                CreateMenuGroup("Mode", new[] {
 	                _modeDisableMenu,
 	                _modePacMenu,
 	                _modeGlobalMenu,
@@ -274,7 +221,7 @@ namespace Shadowsocks.View
                 }),
 
                 // PAC
-                CreateMenuGroup("PAC ", new MenuItem[] {
+                CreateMenuGroup("PAC ", new[] {
                     CreateMenuItem("Update local PAC from Lan IP list",    UpdatePACFromLanIPListItem_Click),
                     new MenuItem("-"),
                     CreateMenuItem("Update local PAC from Chn White list", UpdatePACFromCNWhiteListItem_Click),
@@ -289,7 +236,7 @@ namespace Shadowsocks.View
                 }),
 
                 // Proxy rule
-                CreateMenuGroup("Proxy rule", new MenuItem[] {
+                CreateMenuGroup("Proxy rule", new[] {
                     _ruleBypassLan,
                     _ruleBypassChina,
                     _ruleBypassNotChina,
@@ -301,7 +248,7 @@ namespace Shadowsocks.View
                 new MenuItem("-"),
                 
                 // Servers
-                _serversMenu = CreateMenuGroup("Servers", new MenuItem[] {
+                _serversMenu = CreateMenuGroup("Servers", new[] {
                     SeperatorItem = new MenuItem("-"),
                     CreateMenuItem("Edit servers...",             Config_Click),
                     CreateMenuItem("Import servers from file...", Import_Click),
@@ -313,7 +260,7 @@ namespace Shadowsocks.View
                 }),
 
                 // Servers Subscribe
-                CreateMenuGroup("Servers Subscribe", new MenuItem[] {
+                CreateMenuGroup("Servers Subscribe", new[] {
                     CreateMenuItem("Subscribe setting...",                    SubscribeSetting_Click),
                     CreateMenuItem("Update subscribe SSR node",               CheckNodeUpdate_Click),
                     CreateMenuItem("Update subscribe SSR node(bypass proxy)", CheckNodeUpdateBypassProxy_Click),
@@ -333,7 +280,7 @@ namespace Shadowsocks.View
 
                 new MenuItem("-"),
 
-                CreateMenuGroup("Help", new MenuItem[] {
+                CreateMenuGroup("Help", new[] {
                     CreateMenuItem("Check update",         CheckUpdate_Click),
                     CreateMenuItem("Show logs...",         ShowLogItem_Click),
                     CreateMenuItem("Open wiki...",         OpenWiki_Click),
@@ -373,7 +320,7 @@ namespace Shadowsocks.View
         {
             string argument = @"/select, " + e.Path;
 
-            System.Diagnostics.Process.Start("explorer.exe", argument);
+            Process.Start("explorer.exe", argument);
         }
 
         void ShowBalloonTip(string title, string content, ToolTipIcon icon, int timeout)

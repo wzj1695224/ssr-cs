@@ -150,6 +150,7 @@
     <Compile Include="Controller\SpeedTest.cs" />
     <Compile Include="Controller\UpdateChecker.cs" />
     <Compile Include="Controller\UpdateFreeNode.cs" />
+    <Compile Include="Core\ResourceFactory.cs" />
     <Compile Include="Core\Services.cs" />
     <Compile Include="Encryption\EncryptorBase.cs" />
     <Compile Include="Encryption\EncryptorFactory.cs" />

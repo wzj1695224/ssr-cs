@@ -8,7 +8,7 @@ using System.Windows.Forms;
 using System.Threading;
 using Shadowsocks.Core;
 using Shadowsocks.Encryption;
-using ProxyMode = Shadowsocks.Controller.ProxyMode;
+
 
 namespace Shadowsocks.Model
 {

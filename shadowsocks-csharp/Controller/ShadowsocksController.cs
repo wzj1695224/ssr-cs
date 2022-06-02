@@ -6,18 +6,11 @@ using System.Text;
 using System.Threading;
 using System.Net.Sockets;
 using System.Net;
+using Shadowsocks.Core;
 
 namespace Shadowsocks.Controller
 {
-    public enum ProxyMode
-    {
-        NoModify,
-        Direct,
-        Pac,
-        Global,
-    }
-
-    public class ShadowsocksController
+	public class ShadowsocksController
     {
         // controller:
         // handle user actions
