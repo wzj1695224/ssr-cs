@@ -162,7 +162,7 @@ namespace Shadowsocks.View
 
             // others
             _LoadBalanceMenu    = CreateMenuItem("Load balance",               ToggleLoadBalance);
-            _doUpdateMenu       = CreateMenuItem("Update available",           DoUpdate);
+            _doUpdateMenu       = CreateMenuItem("Update available",           DoUpdateApp);
 
             // do some config
             _doUpdateMenu.Visible = false;
@@ -219,8 +219,8 @@ namespace Shadowsocks.View
                 // Servers Subscribe
                 CreateMenuGroup("Servers Subscribe", new[] {
                     CreateMenuItem("Subscribe setting...",                    SubscribeSetting_Click),
-                    CreateMenuItem("Update subscribe SSR node",               CheckNodeUpdate_Click),
-                    CreateMenuItem("Update subscribe SSR node(bypass proxy)", CheckNodeUpdateBypassProxy_Click),
+                    CreateMenuItem("Update subscribe SSR node",               DoUpdateSubscribe, true),
+                    CreateMenuItem("Update subscribe SSR node(bypass proxy)", DoUpdateSubscribe, false),
                 }),
 
                 _LoadBalanceMenu,
@@ -296,6 +296,9 @@ namespace Shadowsocks.View
             NotifyIconController.ShowBalloonTip(I18N.GetString("Shadowsocks"), result, ToolTipIcon.Info, 1000);
         }
 
+
+
+
         void updateFreeNodeChecker_NewFreeNodeFound(object sender, EventArgs e)
         {
             if (configfrom_open)
@@ -303,6 +306,7 @@ namespace Shadowsocks.View
                 eventList.Add(new EventParams(sender, e));
                 return;
             }
+
             string lastGroup = null;
             int count = 0;
             if (!String.IsNullOrEmpty(updateFreeNodeChecker.FreeNodeResult))
@@ -373,7 +377,7 @@ namespace Shadowsocks.View
                         catch
                         { }
                     }
-                    string subscribeURL = updateSubscribeManager.URL;
+                    string subscribeURL = updateSubscribeManager.Url;
                     if (String.IsNullOrEmpty(curGroup))
                     {
                         curGroup = subscribeURL;
@@ -540,7 +544,7 @@ namespace Shadowsocks.View
 
             if (count > 0)
             {
-                if (updateFreeNodeChecker.noitify)
+                if (updateFreeNodeChecker.Notify)
                     NotifyIconController.ShowBalloonTip(I18N.GetString("Success"),
                         String.Format(I18N.GetString("Update subscribe {0} success"), lastGroup), ToolTipIcon.Info, 10000);
             }
@@ -554,11 +558,12 @@ namespace Shadowsocks.View
                 NotifyIconController.ShowBalloonTip(I18N.GetString("Error"),
                     String.Format(I18N.GetString("Update subscribe {0} failure"), lastGroup), ToolTipIcon.Info, 10000);
             }
-            if (updateSubscribeManager.Next())
-            {
 
-            }
+            updateSubscribeManager.Next();
         }
+
+
+
 
         void updateChecker_NewVersionFound(object sender, EventArgs e)
         {
@@ -1003,16 +1008,6 @@ namespace Shadowsocks.View
             updateChecker.CheckUpdate(controller.GetCurrentConfiguration());
         }
 
-        private void CheckNodeUpdate_Click(object sender, EventArgs e)
-        {
-            updateSubscribeManager.CreateTask(controller.GetCurrentConfiguration(), updateFreeNodeChecker, -1, true, true);
-        }
-
-        private void CheckNodeUpdateBypassProxy_Click(object sender, EventArgs e)
-        {
-            updateSubscribeManager.CreateTask(controller.GetCurrentConfiguration(), updateFreeNodeChecker, -1, false, true);
-        }
-
         private void ShowLogItem_Click(object sender, EventArgs e)
         {
             ShowGlobalLogForm();
@@ -1342,7 +1337,7 @@ namespace Shadowsocks.View
         }
 
 
-        private void DoUpdate(object sender, EventArgs e)
+        private void DoUpdateApp(object sender, EventArgs e)
         {
             Process.Start(updateChecker.LatestVersionURL);
         }
@@ -1394,6 +1389,12 @@ namespace Shadowsocks.View
         private void DoEditUserRule(object sender, EventArgs e)
         {
             controller.TouchUserRuleFile();
+        }
+
+
+        private void DoUpdateSubscribe(bool useProxy)
+        {
+            updateSubscribeManager.CreateTask(controller.GetCurrentConfiguration(), updateFreeNodeChecker, -1, useProxy, true);
         }
 
         #endregion
