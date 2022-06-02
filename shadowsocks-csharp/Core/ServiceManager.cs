@@ -8,7 +8,6 @@ namespace Shadowsocks.Core
 	internal class ServiceManager
 	{
 		public static readonly IEventBus EventBus = new EventBus();
-		public static IMenuClickService MenuClickService => ServiceStore.Get<IMenuClickService>(typeof(IMenuClickService));
 
 
 		public static void Register(Type type, object obj)
@@ -39,14 +38,6 @@ namespace Shadowsocks.Core
 		{
 			return (T)(Objects.TryGetValue(type, out var value) ? value : null);
 		}
-	}
-
-
-
-
-	internal class EventBus : IEventBus
-	{
-		public event Action<ProxyMode> OnProxyModeChange;
 	}
 
 }

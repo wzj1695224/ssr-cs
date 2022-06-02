@@ -142,6 +142,7 @@
     <Compile Include="Controller\Listener.cs" />
     <Compile Include="Controller\Logging.cs" />
     <Compile Include="Controller\ModelManager.cs" />
+    <Compile Include="Controller\NotifyIconController.cs" />
     <Compile Include="Controller\ProxyAuth.cs" />
     <Compile Include="Core\EventBus.cs" />
     <Compile Include="Core\ProxyMode.cs" />

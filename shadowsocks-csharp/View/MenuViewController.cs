@@ -30,9 +30,9 @@ namespace Shadowsocks.View
     }
 
 
-    public class MenuViewController : IMenuClickService
+    public class MenuViewController
     {
-	    public event EventHandler OnMenuClick;
+        public INotifyIconController NotifyIconController;
 
         // yes this is just a menu view controller
         // when config form is closed, it moves away from RAM
@@ -43,26 +43,24 @@ namespace Shadowsocks.View
         private UpdateFreeNode updateFreeNodeChecker;
         private UpdateSubscribeManager updateSubscribeManager;
 
-        private NotifyIcon _notifyIcon;
-
+        // Tray Icon Menu
+        public ContextMenu TrayIconMenu { get; private set; }
         // Mode menu
         private MenuItem _modeNoModifyMenu;
         private MenuItem _modeDisableMenu;
         private MenuItem _modePacMenu;
         private MenuItem _modeGlobalMenu;
-
         // Proxy rule
         private MenuItem _ruleBypassLan;
         private MenuItem _ruleBypassChina;
         private MenuItem _ruleBypassNotChina;
         private MenuItem _ruleUser;
         private MenuItem _ruleDisableBypass;
-
         // Servers
         private MenuItem _serversMenu;
         private MenuItem SeperatorItem;
         private MenuItem _servSameHostMenu;
-
+        // others
         private MenuItem _LoadBalanceMenu;
         private MenuItem _doUpdateMenu;
 
@@ -96,12 +94,7 @@ namespace Shadowsocks.View
             controller.UpdatePACFromGFWListError += controller_UpdatePACFromGFWListError;
             controller.ShowConfigFormEvent += Config_Click;
 
-            _notifyIcon = new NotifyIcon();
-            UpdateTrayIcon();
-            _notifyIcon.Visible = true;
-            _notifyIcon.ContextMenu = LoadContextMenu();
-            _notifyIcon.MouseClick += notifyIcon1_Click;
-            //_notifyIcon.MouseDoubleClick += notifyIcon1_DoubleClick;
+            InitTrayIconMenu();
 
             updateChecker = new UpdateChecker();
             updateChecker.NewVersionFound += updateChecker_NewVersionFound;
@@ -145,34 +138,6 @@ namespace Shadowsocks.View
             MessageBox.Show(e.GetException().ToString(), String.Format(I18N.GetString("Shadowsocks Error: {0}"), e.GetException().Message));
         }
 
-        private void UpdateTrayIcon()
-        {
-			var config = controller.GetCurrentConfiguration();
-			var proxyMode = (ProxyMode) config.sysProxyMode;
-
-            try
-            {
-	            _notifyIcon.Icon = ResourceFactory.CreateStaticTrayIcon();
-            }
-            catch
-            {
-                _notifyIcon.Icon = ResourceFactory.CreateTrayIcon(proxyMode, config.random);
-            }
-            
-            string text;
-            if (proxyMode == ProxyMode.Global)
-                text = I18N.GetString("Global");
-            else if (proxyMode == ProxyMode.Pac)
-                text = I18N.GetString("PAC");
-            else
-                text = I18N.GetString("Disable system proxy");
-
-            text += "\r\n" + String.Format(I18N.GetString("Running: Port {0}"), config.localPort);
-
-            _notifyIcon.Text = text.Substring(0, Math.Min(63, text.Length));
-        }
-
-
 
         private static MenuItem CreateMenuItem(string text, EventHandler click)
         {
@@ -185,7 +150,7 @@ namespace Shadowsocks.View
         }
 
 
-        private ContextMenu LoadContextMenu()
+        private void InitTrayIconMenu()
         {
 	        // Mode submenu
 	        _modeDisableMenu    = CreateMenuItem("Disable system proxy",       EnableItem_Click );
@@ -210,7 +175,7 @@ namespace Shadowsocks.View
             // do some config
             _doUpdateMenu.Visible = false;
 
-            return new ContextMenu(new[] {
+            TrayIconMenu = new ContextMenu(new[] {
                 // Mode
                 CreateMenuGroup("Mode", new[] {
 	                _modeDisableMenu,
@@ -301,7 +266,7 @@ namespace Shadowsocks.View
         private void controller_ConfigChanged(object sender, EventArgs e)
         {
             LoadCurrentConfiguration();
-            UpdateTrayIcon();
+            NotifyIconController.UpdateTrayIcon();
         }
 
         private void controller_ToggleModeChanged(object sender, EventArgs e)
@@ -323,18 +288,10 @@ namespace Shadowsocks.View
             Process.Start("explorer.exe", argument);
         }
 
-        void ShowBalloonTip(string title, string content, ToolTipIcon icon, int timeout)
-        {
-            _notifyIcon.BalloonTipTitle = title;
-            _notifyIcon.BalloonTipText = content;
-            _notifyIcon.BalloonTipIcon = icon;
-            _notifyIcon.ShowBalloonTip(timeout);
-        }
-
         void controller_UpdatePACFromGFWListError(object sender, System.IO.ErrorEventArgs e)
         {
             GFWListUpdater updater = (GFWListUpdater)sender;
-            ShowBalloonTip(I18N.GetString("Failed to update PAC file"), e.GetException().Message, ToolTipIcon.Error, 5000);
+            NotifyIconController.ShowBalloonTip(I18N.GetString("Failed to update PAC file"), e.GetException().Message, ToolTipIcon.Error, 5000);
             Logging.LogUsefulException(e.GetException());
         }
 
@@ -344,7 +301,7 @@ namespace Shadowsocks.View
             string result = e.Success ?
                 (updater.update_type <= 1 ? I18N.GetString("PAC updated") : I18N.GetString("Domain white list list updated"))
                 : I18N.GetString("No updates found. Please report to GFWList if you have problems with it.");
-            ShowBalloonTip(I18N.GetString("Shadowsocks"), result, ToolTipIcon.Info, 1000);
+            NotifyIconController.ShowBalloonTip(I18N.GetString("Shadowsocks"), result, ToolTipIcon.Info, 1000);
         }
 
         void updateFreeNodeChecker_NewFreeNodeFound(object sender, EventArgs e)
@@ -592,7 +549,7 @@ namespace Shadowsocks.View
             if (count > 0)
             {
                 if (updateFreeNodeChecker.noitify)
-                    ShowBalloonTip(I18N.GetString("Success"),
+                    NotifyIconController.ShowBalloonTip(I18N.GetString("Success"),
                         String.Format(I18N.GetString("Update subscribe {0} success"), lastGroup), ToolTipIcon.Info, 10000);
             }
             else
@@ -602,7 +559,7 @@ namespace Shadowsocks.View
                     lastGroup = updateFreeNodeChecker.subscribeTask.Group;
                     //lastGroup = updateSubscribeManager.LastGroup;
                 }
-                ShowBalloonTip(I18N.GetString("Error"),
+                NotifyIconController.ShowBalloonTip(I18N.GetString("Error"),
                     String.Format(I18N.GetString("Update subscribe {0} failure"), lastGroup), ToolTipIcon.Info, 10000);
             }
             if (updateSubscribeManager.Next())
@@ -621,9 +578,9 @@ namespace Shadowsocks.View
             {
                 if (!this._doUpdateMenu.Visible)
                 {
-                    ShowBalloonTip(String.Format(I18N.GetString("{0} {1} Update Found"), UpdateChecker.Name, updateChecker.LatestVersionNumber),
+                    NotifyIconController.ShowBalloonTip(String.Format(I18N.GetString("{0} {1} Update Found"), UpdateChecker.Name, updateChecker.LatestVersionNumber),
                         I18N.GetString("Click menu to download"), ToolTipIcon.Info, 10000);
-                    _notifyIcon.BalloonTipClicked += notifyIcon1_BalloonTipClicked;
+                    // _notifyIcon.BalloonTipClicked += notifyIcon1_BalloonTipClicked;
 
                     timerDelayCheckUpdate.Elapsed -= timer_Elapsed;
                     timerDelayCheckUpdate.Stop();
@@ -642,7 +599,7 @@ namespace Shadowsocks.View
         void notifyIcon1_BalloonTipClicked(object sender, EventArgs e)
         {
             //System.Diagnostics.Process.Start(updateChecker.LatestVersionURL);
-            _notifyIcon.BalloonTipClicked -= notifyIcon1_BalloonTipClicked;
+            // _notifyIcon.BalloonTipClicked -= notifyIcon1_BalloonTipClicked;
         }
 
         private void UpdateSysProxyMode(Configuration config)
@@ -976,7 +933,9 @@ namespace Shadowsocks.View
                 timerDelayCheckUpdate.Stop();
                 timerDelayCheckUpdate = null;
             }
-            _notifyIcon.Visible = false;
+            
+            ServiceManager.EventBus.NotifyAppExit(this, 0);
+
             Application.Exit();
         }
 
@@ -1004,13 +963,13 @@ namespace Shadowsocks.View
 
         private void DonateItem_Click(object sender, EventArgs e)
         {
-            ShowBalloonTip(I18N.GetString("Donate"), I18N.GetString("Please contract to breakwa11 to get more infomation"), ToolTipIcon.Info, 10000);
+            NotifyIconController.ShowBalloonTip(I18N.GetString("Donate"), I18N.GetString("Please contract to breakwa11 to get more infomation"), ToolTipIcon.Info, 10000);
         }
 
         [DllImport("user32.dll")]
         private static extern short GetAsyncKeyState(System.Windows.Forms.Keys vKey);
 
-        private void notifyIcon1_Click(object sender, MouseEventArgs e)
+        public void TrayIconClick(object sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Left)
             {

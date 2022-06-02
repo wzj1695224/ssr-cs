@@ -21,7 +21,7 @@ namespace Shadowsocks
     {
         static ShadowsocksController _controller;
 #if !_CONSOLE
-        static MenuViewController _viewController;
+        static MenuViewController _menuController;
 #endif
 
         [STAThread]
@@ -92,8 +92,12 @@ namespace Shadowsocks
                     ServicePointManager.SecurityProtocol = (SecurityProtocolType)3072;
 #endif
 #if !_CONSOLE
-                _viewController = new MenuViewController(_controller);
-                ServiceManager.Register(typeof(IMenuClickService), _viewController);
+                // MenuController
+                _menuController = new MenuViewController(_controller);
+
+                // INotifyIconController
+                INotifyIconController notifyIconController = new NotifyIconController(ServiceManager.EventBus, _controller, _menuController);
+                _menuController.NotifyIconController = notifyIconController;
 #endif
 
                 _controller.Start();

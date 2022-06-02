@@ -9,6 +9,25 @@ namespace Shadowsocks.Core
 {
 	internal interface IEventBus
 	{
-		event Action<ProxyMode> OnProxyModeChange;
+		/// <summary>
+		/// Application Exit
+		/// </summary>
+		event EventHandler<int> OnAppExit;
+
+		void NotifyAppExit(object sender, int code);
+	}
+
+
+
+
+	internal class EventBus : IEventBus
+	{
+		public event EventHandler<int> OnAppExit;
+
+
+		public void NotifyAppExit(object sender, int code)
+		{
+			OnAppExit?.Invoke(sender, code);
+		}
 	}
 }
