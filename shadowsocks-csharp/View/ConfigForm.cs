@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Net;
 using Microsoft.Win32;
 using Shadowsocks.Controller;
+using Shadowsocks.Core.Model;
 using Shadowsocks.Model;
 using Shadowsocks.Properties;
 using ZXing.QrCode.Internal;

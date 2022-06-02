@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Timers;
 using OpenDNS;
+using Shadowsocks.Core.Model;
 using Shadowsocks.Model;
 using Shadowsocks.Util;
 

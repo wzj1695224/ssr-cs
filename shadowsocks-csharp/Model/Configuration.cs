@@ -7,6 +7,7 @@ using System.Text;
 using System.Windows.Forms;
 using System.Threading;
 using Shadowsocks.Core;
+using Shadowsocks.Core.Model;
 using Shadowsocks.Encryption;
 
 

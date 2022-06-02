@@ -9,6 +9,7 @@ using Shadowsocks.Controller;
 using Shadowsocks.Model;
 using Shadowsocks.Properties;
 using System.Threading;
+using Shadowsocks.Core.Model;
 
 namespace Shadowsocks.View
 {
@@ -135,7 +136,7 @@ namespace Shadowsocks.View
         {
             this.Text = title_perfix + I18N.GetString("ServerLog") + "("
                 + (controller.GetCurrentConfiguration().shareOverLan ? "any" : "local") + ":" + controller.GetCurrentConfiguration().localPort.ToString()
-                + "(" + Model.Server.GetForwardServerRef().GetConnections().Count.ToString()+ ")"
+                + "(" + Core.Model.Server.GetForwardServerRef().GetConnections().Count.ToString()+ ")"
                 + " " + I18N.GetString("Version") + UpdateChecker.FullVersion
                 + ")";
         }
@@ -766,13 +767,13 @@ namespace Shadowsocks.View
 
         private void DisconnectForward_Click(object sender, EventArgs e)
         {
-            Model.Server.GetForwardServerRef().GetConnections().CloseAll();
+            Core.Model.Server.GetForwardServerRef().GetConnections().CloseAll();
         }
 
         private void Disconnect_Click(object sender, EventArgs e)
         {
             controller.DisconnectAllConnections();
-            Model.Server.GetForwardServerRef().GetConnections().CloseAll();
+            Core.Model.Server.GetForwardServerRef().GetConnections().CloseAll();
         }
 
         private void ClearMaxSpeed_Click(object sender, EventArgs e)

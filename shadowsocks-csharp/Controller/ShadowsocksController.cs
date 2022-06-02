@@ -7,6 +7,7 @@ using System.Threading;
 using System.Net.Sockets;
 using System.Net;
 using Shadowsocks.Core;
+using Shadowsocks.Core.Model;
 
 namespace Shadowsocks.Controller
 {

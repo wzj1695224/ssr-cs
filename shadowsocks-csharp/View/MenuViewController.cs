@@ -11,6 +11,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows.Forms;
 using Shadowsocks.Core;
+using Shadowsocks.Core.Model;
 using ZXing;
 using ZXing.Common;
 using ZXing.QrCode;

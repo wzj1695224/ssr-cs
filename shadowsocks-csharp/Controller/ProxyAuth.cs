@@ -8,6 +8,7 @@ using Shadowsocks.Obfs;
 using Shadowsocks.Model;
 using System.Timers;
 using System.Threading;
+using Shadowsocks.Core.Model;
 
 namespace Shadowsocks.Controller
 {
