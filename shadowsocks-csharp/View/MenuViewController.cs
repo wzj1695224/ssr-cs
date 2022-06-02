@@ -43,7 +43,7 @@ namespace Shadowsocks.View
         private UpdateFreeNode updateFreeNodeChecker;
         private UpdateSubscribeManager updateSubscribeManager;
 
-        // Tray Icon Menu
+        #region Fields: TrayIcon MenuItem 
         public ContextMenu TrayIconMenu { get; private set; }
         // Mode menu
         private MenuItem _modeNoModifyMenu;
@@ -63,6 +63,7 @@ namespace Shadowsocks.View
         // others
         private MenuItem _LoadBalanceMenu;
         private MenuItem _doUpdateMenu;
+        #endregion
 
         private ConfigForm configForm;
         private SettingsForm settingsForm;
@@ -78,6 +79,8 @@ namespace Shadowsocks.View
 
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
         static extern bool DestroyIcon(IntPtr handle);
+
+
 
 
         public MenuViewController(ShadowsocksController controller)
@@ -139,38 +142,27 @@ namespace Shadowsocks.View
         }
 
 
-        private static MenuItem CreateMenuItem(string text, EventHandler click)
-        {
-            return new MenuItem(I18N.GetString(text), click);
-        }
-
-        private static MenuItem CreateMenuGroup(string text, MenuItem[] items)
-        {
-            return new MenuItem(I18N.GetString(text), items);
-        }
-
-
         private void InitTrayIconMenu()
         {
 	        // Mode submenu
-	        _modeDisableMenu    = CreateMenuItem("Disable system proxy",       EnableItem_Click );
-	        _modePacMenu        = CreateMenuItem("PAC",                        PACModeItem_Click );
-	        _modeGlobalMenu     = CreateMenuItem("Global",                     GlobalModeItem_Click );
-	        _modeNoModifyMenu   = CreateMenuItem("No modify system proxy",     NoModifyItem_Click );
+	        _modeDisableMenu    = CreateMenuItem("Disable system proxy",       SetProxyMode, ProxyMode.Direct );
+	        _modePacMenu        = CreateMenuItem("PAC",                        SetProxyMode, ProxyMode.Pac );
+	        _modeGlobalMenu     = CreateMenuItem("Global",                     SetProxyMode, ProxyMode.Global );
+	        _modeNoModifyMenu   = CreateMenuItem("No modify system proxy",     SetProxyMode, ProxyMode.NoModify );
 
             // Proxy rule submenu
-            _ruleBypassLan      = CreateMenuItem("Bypass LAN",                 RuleBypassLanItem_Click);
-            _ruleBypassChina    = CreateMenuItem("Bypass LAN && China",        RuleBypassChinaItem_Click);
-            _ruleBypassNotChina = CreateMenuItem("Bypass LAN && not China",    RuleBypassNotChinaItem_Click);
-            _ruleUser           = CreateMenuItem("User custom",                RuleUserItem_Click);
-            _ruleDisableBypass  = CreateMenuItem("Disable bypass",             RuleBypassDisableItem_Click);
+            _ruleBypassLan      = CreateMenuItem("Bypass LAN",                 SetRuleMode,  ProxyRuleMode.BypassLan);
+            _ruleBypassChina    = CreateMenuItem("Bypass LAN && China",        SetRuleMode,  ProxyRuleMode.BypassLanAndChina);
+            _ruleBypassNotChina = CreateMenuItem("Bypass LAN && not China",    SetRuleMode,  ProxyRuleMode.BypassLanAndNotChina);
+            _ruleUser           = CreateMenuItem("User custom",                SetRuleMode,  ProxyRuleMode.UserCustom);
+            _ruleDisableBypass  = CreateMenuItem("Disable bypass",             SetRuleMode,  ProxyRuleMode.Disable);
 
             // Servers submenu
-            _servSameHostMenu   = CreateMenuItem("Same host for same address", SelectSameHostForSameTargetItem_Click);
+            _servSameHostMenu   = CreateMenuItem("Same host for same address", ToggleSameHostForSameAddress);
 
             // others
-            _LoadBalanceMenu    = CreateMenuItem("Load balance",               SelectRandomItem_Click);
-            _doUpdateMenu       = CreateMenuItem("Update available",           UpdateItem_Clicked);
+            _LoadBalanceMenu    = CreateMenuItem("Load balance",               ToggleLoadBalance);
+            _doUpdateMenu       = CreateMenuItem("Update available",           DoUpdate);
 
             // do some config
             _doUpdateMenu.Visible = false;
@@ -187,17 +179,17 @@ namespace Shadowsocks.View
 
                 // PAC
                 CreateMenuGroup("PAC ", new[] {
-                    CreateMenuItem("Update local PAC from Lan IP list",    UpdatePACFromLanIPListItem_Click),
+                    CreateMenuItem("Update local PAC from Lan IP list",    DoUpdatePacFromLanIpList),
                     new MenuItem("-"),
-                    CreateMenuItem("Update local PAC from Chn White list", UpdatePACFromCNWhiteListItem_Click),
-                    CreateMenuItem("Update local PAC from Chn IP list",    UpdatePACFromCNIPListItem_Click),
-                    CreateMenuItem("Update local PAC from GFWList",        UpdatePACFromGFWListItem_Click),
+                    CreateMenuItem("Update local PAC from Chn White list", DoUpdatePacFromChnWhiteList),
+                    CreateMenuItem("Update local PAC from Chn IP list",    DoUpdatePacFromChnIpList),
+                    CreateMenuItem("Update local PAC from GFWList",        DoUpdatePacFromGfwList),
                     new MenuItem("-"),
-                    CreateMenuItem("Update local PAC from Chn Only list",  UpdatePACFromCNOnlyListItem_Click),
+                    CreateMenuItem("Update local PAC from Chn Only list",  DoUpdatePacFromChnOnlyList),
                     new MenuItem("-"),
-                    CreateMenuItem("Copy PAC URL",                         CopyPACURLItem_Click),
-                    CreateMenuItem("Edit local PAC file...",               EditPACFileItem_Click),
-                    CreateMenuItem("Edit user rule for GFWList...",        EditUserRuleFileForGFWListItem_Click),
+                    CreateMenuItem("Copy PAC URL",                         DoCopyPacUrl),
+                    CreateMenuItem("Edit local PAC file...",               DoEditLocalPac),
+                    CreateMenuItem("Edit user rule for GFWList...",        DoEditUserRule),
                 }),
 
                 // Proxy rule
@@ -589,11 +581,6 @@ namespace Shadowsocks.View
                 this._doUpdateMenu.Visible = true;
                 this._doUpdateMenu.Text = String.Format(I18N.GetString("New version {0} {1} available"), UpdateChecker.Name, updateChecker.LatestVersionNumber);
             }
-        }
-
-        void UpdateItem_Clicked(object sender, EventArgs e)
-        {
-            System.Diagnostics.Process.Start(updateChecker.LatestVersionURL);
         }
 
         void notifyIcon1_BalloonTipClicked(object sender, EventArgs e)
@@ -999,113 +986,6 @@ namespace Shadowsocks.View
             }
         }
 
-        private void NoModifyItem_Click(object sender, EventArgs e)
-        {
-            controller.ToggleMode(ProxyMode.NoModify);
-        }
-
-        private void EnableItem_Click(object sender, EventArgs e)
-        {
-            controller.ToggleMode(ProxyMode.Direct);
-        }
-
-        private void GlobalModeItem_Click(object sender, EventArgs e)
-        {
-            controller.ToggleMode(ProxyMode.Global);
-        }
-
-        private void PACModeItem_Click(object sender, EventArgs e)
-        {
-            controller.ToggleMode(ProxyMode.Pac);
-        }
-
-        private void RuleBypassLanItem_Click(object sender, EventArgs e)
-        {
-            controller.ToggleRuleMode((int)ProxyRuleMode.BypassLan);
-        }
-
-        private void RuleBypassChinaItem_Click(object sender, EventArgs e)
-        {
-            controller.ToggleRuleMode((int)ProxyRuleMode.BypassLanAndChina);
-        }
-
-        private void RuleBypassNotChinaItem_Click(object sender, EventArgs e)
-        {
-            controller.ToggleRuleMode((int)ProxyRuleMode.BypassLanAndNotChina);
-        }
-
-        private void RuleUserItem_Click(object sender, EventArgs e)
-        {
-            controller.ToggleRuleMode((int)ProxyRuleMode.UserCustom);
-        }
-
-        private void RuleBypassDisableItem_Click(object sender, EventArgs e)
-        {
-            controller.ToggleRuleMode((int)ProxyRuleMode.Disable);
-        }
-
-        private void SelectRandomItem_Click(object sender, EventArgs e)
-        {
-            _LoadBalanceMenu.Checked = !_LoadBalanceMenu.Checked;
-            controller.ToggleSelectRandom(_LoadBalanceMenu.Checked);
-        }
-
-        private void SelectSameHostForSameTargetItem_Click(object sender, EventArgs e)
-        {
-            _servSameHostMenu.Checked = !_servSameHostMenu.Checked;
-            controller.ToggleSameHostForSameTargetRandom(_servSameHostMenu.Checked);
-        }
-
-        private void CopyPACURLItem_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                Configuration config = controller.GetCurrentConfiguration();
-                string pacUrl;
-                pacUrl = "http://127.0.0.1:" + config.localPort.ToString() + "/pac?" + "auth=" + config.localAuthPassword + "&t=" + Util.Utils.GetTimestamp(DateTime.Now);
-                Clipboard.SetText(pacUrl);
-            }
-            catch
-            {
-
-            }
-        }
-
-        private void EditPACFileItem_Click(object sender, EventArgs e)
-        {
-            controller.TouchPACFile();
-        }
-
-        private void UpdatePACFromGFWListItem_Click(object sender, EventArgs e)
-        {
-            controller.UpdatePACFromGFWList();
-        }
-
-        private void UpdatePACFromLanIPListItem_Click(object sender, EventArgs e)
-        {
-            controller.UpdatePACFromOnlinePac("https://raw.githubusercontent.com/shadowsocksrr/breakwa11.github.io/master/ssr/ss_lanip.pac");
-        }
-
-        private void UpdatePACFromCNWhiteListItem_Click(object sender, EventArgs e)
-        {
-            controller.UpdatePACFromOnlinePac("https://raw.githubusercontent.com/shadowsocksrr/breakwa11.github.io/master/ssr/ss_white.pac");
-        }
-
-        private void UpdatePACFromCNOnlyListItem_Click(object sender, EventArgs e)
-        {
-            controller.UpdatePACFromOnlinePac("https://raw.githubusercontent.com/shadowsocksrr/breakwa11.github.io/master/ssr/ss_white_r.pac");
-        }
-
-        private void UpdatePACFromCNIPListItem_Click(object sender, EventArgs e)
-        {
-            controller.UpdatePACFromOnlinePac("https://raw.githubusercontent.com/shadowsocksrr/breakwa11.github.io/master/ssr/ss_cnip.pac");
-        }
-
-        private void EditUserRuleFileForGFWListItem_Click(object sender, EventArgs e)
-        {
-            controller.TouchUserRuleFile();
-        }
-
         private void AServerItem_Click(object sender, EventArgs e)
         {
             Configuration config = controller.GetCurrentConfiguration();
@@ -1433,9 +1313,118 @@ namespace Shadowsocks.View
             showURLFromQRCode();
         }
 
-        void showURLFromQRCode(object sender, System.EventArgs e)
+
+
+
+        #region Controller Wrapper
+
+        public void SetProxyMode(ProxyMode mode)
         {
-            showURLFromQRCode();
+            controller.ToggleMode(mode);
         }
+
+        public void SetRuleMode(ProxyRuleMode mode)
+        {
+            controller.ToggleRuleMode((int)mode);
+        }
+
+
+        private void ToggleSameHostForSameAddress(object sender, EventArgs e)
+        {
+            _servSameHostMenu.Checked = !_servSameHostMenu.Checked;
+            controller.ToggleSameHostForSameTargetRandom(_servSameHostMenu.Checked);
+        }
+
+        private void ToggleLoadBalance(object sender, EventArgs e)
+        {
+            _LoadBalanceMenu.Checked = !_LoadBalanceMenu.Checked;
+            controller.ToggleSelectRandom(_LoadBalanceMenu.Checked);
+        }
+
+
+        private void DoUpdate(object sender, EventArgs e)
+        {
+            Process.Start(updateChecker.LatestVersionURL);
+        }
+
+
+        private void DoUpdatePacFromLanIpList(object sender, EventArgs e)
+        {
+            controller.UpdatePACFromOnlinePac("https://raw.githubusercontent.com/shadowsocksrr/breakwa11.github.io/master/ssr/ss_lanip.pac");
+        }
+
+        private void DoUpdatePacFromChnWhiteList(object sender, EventArgs e)
+        {
+            controller.UpdatePACFromOnlinePac("https://raw.githubusercontent.com/shadowsocksrr/breakwa11.github.io/master/ssr/ss_white.pac");
+        }
+
+        private void DoUpdatePacFromChnIpList(object sender, EventArgs e)
+        {
+            controller.UpdatePACFromOnlinePac("https://raw.githubusercontent.com/shadowsocksrr/breakwa11.github.io/master/ssr/ss_cnip.pac");
+        }
+
+        private void DoUpdatePacFromGfwList(object sender, EventArgs e)
+        {
+            controller.UpdatePACFromGFWList();
+        }
+
+        private void DoUpdatePacFromChnOnlyList(object sender, EventArgs e)
+        {
+            controller.UpdatePACFromOnlinePac("https://raw.githubusercontent.com/shadowsocksrr/breakwa11.github.io/master/ssr/ss_white_r.pac");
+        }
+
+
+        private void DoCopyPacUrl(object sender, EventArgs e)
+        {
+            var config = controller.GetCurrentConfiguration();
+
+            var port = config.localPort;
+            var auth = config.localAuthPassword;
+            var t = Util.Utils.GetTimestamp(DateTime.Now);
+            var url = $"http://127.0.0.1:{port}/pac?auth={auth}&t={t}";
+
+            Clipboard.SetText(url);
+        }
+
+        private void DoEditLocalPac(object sender, EventArgs e)
+        {
+            controller.TouchPACFile();
+        }
+
+        private void DoEditUserRule(object sender, EventArgs e)
+        {
+            controller.TouchUserRuleFile();
+        }
+
+        #endregion
+
+
+
+
+        #region Factory Method
+
+        private static MenuItem CreateMenuItem(string text, EventHandler click)
+        {
+            return new MenuItem(I18N.GetString(text), click);
+        }
+
+        private static MenuItem CreateMenuItem(string text, Action click)
+        {
+            return CreateMenuItem(text, (sender, e) => click());
+        }
+
+        private static MenuItem CreateMenuItem<T>(string text, Action<T> action, T param)
+        {
+            return CreateMenuItem(text, (sender, e) => action(param));
+        }
+
+        private static MenuItem CreateMenuGroup(string text, MenuItem[] items)
+        {
+            return new MenuItem(I18N.GetString(text), items);
+        }
+
+        #endregion
+
     }
+
 }
