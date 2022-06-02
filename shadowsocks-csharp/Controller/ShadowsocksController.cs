@@ -8,6 +8,7 @@ using System.Net.Sockets;
 using System.Net;
 using Shadowsocks.Core;
 using Shadowsocks.Core.Model;
+using Shadowsocks.Core.Model.Server;
 
 namespace Shadowsocks.Controller
 {

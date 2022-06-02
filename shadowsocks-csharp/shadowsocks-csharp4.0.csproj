@@ -146,6 +146,7 @@
     <Compile Include="Controller\NotifyIconController.cs" />
     <Compile Include="Controller\ProxyAuth.cs" />
     <Compile Include="Core\EventBus.cs" />
+    <Compile Include="Core\Model\Server\Server.cs" />
     <Compile Include="Core\ProxyMode.cs" />
     <Compile Include="Controller\ProxySocket.cs" />
     <Compile Include="Controller\Socks5Forwarder.cs" />
@@ -178,7 +179,6 @@
     <Compile Include="Model\MinSearchTree.cs" />
     <Compile Include="Model\Server.cs" />
     <Compile Include="Model\Configuration.cs" />
-    <Compile Include="Core\Model\Server.cs" />
     <Compile Include="Model\ServerSelectStrategy.cs" />
     <Compile Include="Model\ServerSpeedLog.cs" />
     <Compile Include="Obfs\Auth.cs" />

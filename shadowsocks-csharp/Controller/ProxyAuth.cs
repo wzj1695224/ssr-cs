@@ -9,6 +9,7 @@ using Shadowsocks.Model;
 using System.Timers;
 using System.Threading;
 using Shadowsocks.Core.Model;
+using Shadowsocks.Core.Model.Server;
 
 namespace Shadowsocks.Controller
 {

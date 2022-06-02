@@ -6,7 +6,7 @@ using Shadowsocks.Controller;
 using Shadowsocks.Model;
 
 
-namespace Shadowsocks.Core.Model
+namespace Shadowsocks.Core.Model.Server
 {
 	[Serializable]
 	public class Server

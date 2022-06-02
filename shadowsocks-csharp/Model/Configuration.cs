@@ -8,6 +8,7 @@ using System.Windows.Forms;
 using System.Threading;
 using Shadowsocks.Core;
 using Shadowsocks.Core.Model;
+using Shadowsocks.Core.Model.Server;
 using Shadowsocks.Encryption;
 
 

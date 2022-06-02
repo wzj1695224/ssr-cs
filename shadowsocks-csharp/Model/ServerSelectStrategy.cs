@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using Shadowsocks.Core.Model;
+using Shadowsocks.Core.Model.Server;
 
 namespace Shadowsocks.Model
 {

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Shadowsocks.Core.Model;
+using Shadowsocks.Core.Model.Server;
 using Shadowsocks.Model;
 using Shadowsocks.Util;
 

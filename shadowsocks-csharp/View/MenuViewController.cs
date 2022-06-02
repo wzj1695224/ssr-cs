@@ -12,6 +12,7 @@ using System.Threading;
 using System.Windows.Forms;
 using Shadowsocks.Core;
 using Shadowsocks.Core.Model;
+using Shadowsocks.Core.Model.Server;
 using ZXing;
 using ZXing.Common;
 using ZXing.QrCode;

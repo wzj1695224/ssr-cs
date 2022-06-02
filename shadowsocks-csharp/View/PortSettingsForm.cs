@@ -7,6 +7,7 @@ using System.Text;
 using System.Windows.Forms;
 using Shadowsocks.Controller;
 using Shadowsocks.Core.Model;
+using Shadowsocks.Core.Model.Server;
 using Shadowsocks.Model;
 using Shadowsocks.Properties;
 

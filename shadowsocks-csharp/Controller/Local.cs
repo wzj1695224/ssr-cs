@@ -10,6 +10,7 @@ using System.Timers;
 using System.Threading;
 using OpenDNS;
 using Shadowsocks.Core.Model;
+using Shadowsocks.Core.Model.Server;
 using Shadowsocks.Util;
 
 namespace Shadowsocks.Controller
