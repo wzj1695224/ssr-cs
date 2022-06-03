@@ -1,7 +1,5 @@
 ﻿using Shadowsocks.Properties;
-using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Text.RegularExpressions;
 
 
@@ -50,6 +48,22 @@ namespace Shadowsocks.Controller
 			}
 			else
 				return null;
+		}
+
+
+
+
+		public static class Static
+		{
+			/// <summary>
+			/// translate string
+			/// </summary>
+			/// <param name="key">en string</param>
+			/// <returns></returns>
+			public static string S(string key)
+			{
+				return I18N.Strings.TryGetValue(key, out var value) ? value : key;
+			}
 		}
 	}
 }

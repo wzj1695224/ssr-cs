@@ -1,23 +1,22 @@
-﻿using System;
+﻿using Shadowsocks.Controller;
+using Shadowsocks.Core;
+using Shadowsocks.Core.Model.Server;
+using Shadowsocks.Model;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Text;
-using System.Windows.Forms;
-using Shadowsocks.Controller;
-using Shadowsocks.Model;
-using Shadowsocks.Properties;
 using System.Threading;
-using Shadowsocks.Core.Model;
-using Shadowsocks.Core.Model.Server;
-using static Shadowsocks.Framework.Windows.Forms.Menu.MenuFactory;
+using System.Windows.Forms;
+using Shadowsocks.Framework.Windows;
+using static Shadowsocks.Controller.I18N.Static;
 using static Shadowsocks.Framework.Util.Utils;
+using static Shadowsocks.Framework.Windows.Forms.Menu.MenuFactory;
 
 
 namespace Shadowsocks.View
 {
-    public partial class ServerLogForm : Form
+	public partial class ServerLogForm : Form
     {
         class DoubleBufferListView : DataGridView
         {
@@ -44,67 +43,34 @@ namespace Shadowsocks.View
         private int updateTick = 0;
         private int updateSize = 0;
         private int pendingUpdate = 0;
-        private string title_perfix = "";
         private ServerSpeedLogShow[] ServerSpeedLogList;
         private Thread workerThread;
         private AutoResetEvent workerEvent = new AutoResetEvent(false);
 
+
         public ServerLogForm(ShadowsocksController controller)
         {
             this.controller = controller;
-            try
-            {
-                this.Icon = Icon.FromHandle((new Bitmap("icon.png")).GetHicon());
-                title_perfix = System.Windows.Forms.Application.StartupPath;
-                if (title_perfix.Length > 20)
-                    title_perfix = title_perfix.Substring(0, 20);
-            }
-            catch
-            {
-                this.Icon = Icon.FromHandle(Resources.ssw128.GetHicon());
-            }
-            this.Font = System.Drawing.SystemFonts.MessageBoxFont;
+
+            this.Icon = ResourceFactory.CreateIcon();
+            this.Font = SystemFonts.MessageBoxFont;
             InitializeComponent();
 
-            this.Width = 810;
-            int dpi_mul = Util.Utils.GetDpiMul();
+            var config = controller.GetCurrentConfiguration();
 
-            Configuration config = controller.GetCurrentConfiguration();
-            if (config.configs.Count < 8)
-            {
-                this.Height = 300 * dpi_mul / 4;
-            }
-            else if (config.configs.Count < 20)
-            {
-                this.Height = (300 + (config.configs.Count - 8) * 16) * dpi_mul / 4;
-            }
-            else
-            {
-                this.Height = 500 * dpi_mul / 4;
-            }
-            UpdateTexts();
+            this.Width = 810;
+            this.Height = CalcPreferHeight(config.configs.Count);
+
+            UpdateTitle();
             UpdateLog();
 
             InitMenu();
             controller.ConfigChanged += controller_ConfigChanged;
 
-            for (int i = 0; i < ServerDataGrid.Columns.Count; ++i)
-            {
-                ServerDataGrid.Columns[i].Width = ServerDataGrid.Columns[i].Width * dpi_mul / 4;
-            }
-
-            ServerDataGrid.RowTemplate.Height = 20 * dpi_mul / 4;
-            //ServerDataGrid.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.None;
-            int width = 0;
-            for (int i = 0; i < ServerDataGrid.Columns.Count; ++i)
-            {
-                if (!ServerDataGrid.Columns[i].Visible)
-                    continue;
-                width += ServerDataGrid.Columns[i].Width;
-            }
-            this.Width = width + SystemInformation.VerticalScrollBarWidth + (this.Width - this.ClientSize.Width) + 1;
-            ServerDataGrid.AutoResizeColumnHeadersHeight();
+            SetupServerDataTable();
+            AutoSizeFinal();
         }
+
 
         private void InitMenu()
         { 
@@ -132,29 +98,46 @@ namespace Shadowsocks.View
 		        }),
 		        CreateMenuGroup("&Window", new[]
 		        {
-			        CreateMenuItem("Auto &size", AutoSizeColumnsAndForm),
+			        CreateMenuItem("Auto &size", AutoSizeServerDataTable),
                     topmostItem
                 }),
 	        });
         }
 
 
+        private void SetupServerDataTable()
+        {
+            var mul = DPI.DpiMul;
+
+            foreach (DataGridViewColumn column in ServerDataGrid.Columns)
+            {
+                // header text 
+                column.HeaderText = S(column.HeaderText);
+
+                // width with dpi
+                column.Width = column.Width * mul / 4;
+            }
+
+            ServerDataGrid.RowTemplate.Height = 20 * mul / 4;
+        }
+
+
+
+
         private void UpdateTitle()
         {
-            this.Text = title_perfix + I18N.GetString("ServerLog") + "("
-                + (controller.GetCurrentConfiguration().shareOverLan ? "any" : "local") + ":" + controller.GetCurrentConfiguration().localPort.ToString()
-                + "(" + Core.Model.Server.Server.GetForwardServerRef().GetConnections().Count.ToString()+ ")"
-                + " " + I18N.GetString("Version") + UpdateChecker.FullVersion
-                + ")";
+	        var title = S("ServerStat");
+            const string version = UpdateChecker.FullVersion;
+            var count = Core.Model.Server.Server.GetForwardServerRef().GetConnections().Count;
+            var share = controller.GetCurrentConfiguration().shareOverLan ? "any" : "local";
+            var port = controller.GetCurrentConfiguration().localPort;
+            var path = Application.StartupPath;
+
+            this.Text = $@"{title} {version}    Conn {count}    {share}:{port}    {path}";
         }
-        private void UpdateTexts()
-        {
-            UpdateTitle();
-            for (int i = 0; i < ServerDataGrid.Columns.Count; ++i)
-            {
-                ServerDataGrid.Columns[i].HeaderText = I18N.GetString(ServerDataGrid.Columns[i].HeaderText);
-            }
-        }
+
+
+
 
         private void controller_ConfigChanged(object sender, EventArgs e)
         {

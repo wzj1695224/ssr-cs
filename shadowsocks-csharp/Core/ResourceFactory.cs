@@ -7,6 +7,21 @@ namespace Shadowsocks.Core
 {
 	internal class ResourceFactory
 	{
+		public static Icon CreateIcon()
+		{
+			try
+			{
+				return Icon.FromHandle((new Bitmap("icon.png")).GetHicon());
+			}
+			catch
+			{
+				return Icon.FromHandle(Resources.ssw128.GetHicon());
+			}
+		}
+
+
+
+
 		public static Icon CreateStaticTrayIcon()
         {
 			using ( var bitmap = new Bitmap("icon.png") )

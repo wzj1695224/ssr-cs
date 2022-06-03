@@ -1,11 +1,12 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
+using Shadowsocks.Framework.Windows;
 
 
 namespace Shadowsocks.View
 {
-	internal static class AutoSizeHelper
+	internal static class ColumnSizeHelper
 	{
 		internal static HashSet<string> AutoSizeColumns = new HashSet<string>
 		{
@@ -21,9 +22,35 @@ namespace Shadowsocks.View
 	}
 
 
+
+
 	public partial class ServerLogForm
 	{
-		private void AutoSizeColumnsAndForm()
+		private int CalcPreferHeight(int serverCount)
+		{
+			var mul = DPI.DpiMul;
+
+			if (serverCount < 8)
+				return 300 * mul / 4;
+			if (serverCount < 20)
+				this.Height = (300 + (serverCount - 8) * 16) * mul / 4;
+			return 500 * mul / 4;
+		}
+
+
+		private void AutoSizeFinal()
+		{
+			var columnTotalWidth = ServerDataGrid.Columns.Cast<DataGridViewColumn>()
+				.Where(c => c.Visible)
+				.Sum(c => c.Width);
+
+			this.Width = columnTotalWidth + SystemInformation.VerticalScrollBarWidth + (this.Width - this.ClientSize.Width) + 1;
+
+			ServerDataGrid.AutoResizeColumnHeadersHeight();
+		}
+
+
+		private void AutoSizeServerDataTable()
 		{
 			var columns = ServerDataGrid.Columns;
 
@@ -32,7 +59,7 @@ namespace Shadowsocks.View
 				var column = columns[i];
 
 				var name = column.Name;
-				if (!AutoSizeHelper.AutoSizeColumns.Contains(name)) continue;
+				if (!ColumnSizeHelper.AutoSizeColumns.Contains(name)) continue;
 
 				if (column.Width <= 2)
 					continue;
@@ -40,18 +67,12 @@ namespace Shadowsocks.View
 				ServerDataGrid.AutoResizeColumn(i, DataGridViewAutoSizeColumnMode.AllCellsExceptHeader);
 
 				// check min size
-				if ( AutoSizeHelper.KeepMinSizeColumns.Contains(name) )
+				if ( ColumnSizeHelper.KeepMinSizeColumns.Contains(name) )
 					column.MinimumWidth = column.Width;
 			}
 
-			// col
-			var colTotalWidth = columns.Cast<DataGridViewColumn>()
-				.Where(c => c.Visible)
-				.Sum(c => c.Width);
-
-			this.Width = colTotalWidth + SystemInformation.VerticalScrollBarWidth + (this.Width - this.ClientSize.Width) + 1;
-
-			ServerDataGrid.AutoResizeColumnHeadersHeight();
+			AutoSizeFinal();
 		}
 	}
+
 }

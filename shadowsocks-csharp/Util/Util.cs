@@ -14,6 +14,7 @@ using System.Windows.Forms;
 using OpenDNS;
 using Shadowsocks.Controller;
 using Shadowsocks.Encryption;
+using Shadowsocks.Framework.Windows;
 using Shadowsocks.Model;
 
 namespace Shadowsocks.Util
@@ -482,12 +483,7 @@ namespace Shadowsocks.Util
 
         public static int GetDpiMul()
         {
-            int dpi;
-            using (Graphics graphics = Graphics.FromHwnd(IntPtr.Zero))
-            {
-                dpi = (int)graphics.DpiX;
-            }
-            return (dpi * 4 + 48) / 96;
+            return DPI.DpiMul;
         }
 
 #if !_CONSOLE

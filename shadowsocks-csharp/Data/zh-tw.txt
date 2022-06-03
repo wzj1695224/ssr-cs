@@ -128,7 +128,7 @@ Cancel=取消
 
 # ServerLog Form
 
-ServerLog=伺服器記錄
+ServerStat=伺服器記錄
 &Control=操作(&C)
 &Disconnect direct connections=斷開直連連接(&D)
 Disconnect &All=斷開當前所有連接(&A)
