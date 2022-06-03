@@ -1,21 +1,19 @@
 ﻿using Shadowsocks.Controller;
+using Shadowsocks.Core;
+using Shadowsocks.Core.Model.Server;
 using Shadowsocks.Model;
-using Shadowsocks.Properties;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows.Forms;
-using Shadowsocks.Core;
-using Shadowsocks.Core.Model;
-using Shadowsocks.Core.Model.Server;
 using ZXing;
 using ZXing.Common;
 using ZXing.QrCode;
+using static Shadowsocks.Framework.Windows.Forms.Menu.MenuFactory;
 
 
 namespace Shadowsocks.View
@@ -1356,33 +1354,6 @@ namespace Shadowsocks.View
         private void DoUpdateSubscribe(bool useProxy)
         {
             updateSubscribeManager.CreateTask(controller.GetCurrentConfiguration(), updateFreeNodeChecker, -1, useProxy, true);
-        }
-
-        #endregion
-
-
-
-
-        #region Factory Method
-
-        private static MenuItem CreateMenuItem(string text, EventHandler click)
-        {
-            return new MenuItem(I18N.GetString(text), click);
-        }
-
-        private static MenuItem CreateMenuItem(string text, Action click)
-        {
-            return CreateMenuItem(text, (sender, e) => click());
-        }
-
-        private static MenuItem CreateMenuItem<T>(string text, Action<T> action, T param)
-        {
-            return CreateMenuItem(text, (sender, e) => action(param));
-        }
-
-        private static MenuItem CreateMenuGroup(string text, MenuItem[] items)
-        {
-            return new MenuItem(I18N.GetString(text), items);
         }
 
         #endregion

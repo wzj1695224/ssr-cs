@@ -11,6 +11,9 @@ using Shadowsocks.Properties;
 using System.Threading;
 using Shadowsocks.Core.Model;
 using Shadowsocks.Core.Model.Server;
+using static Shadowsocks.Framework.Windows.Forms.Menu.MenuFactory;
+using static Shadowsocks.Framework.Util.Utils;
+
 
 namespace Shadowsocks.View
 {
@@ -82,28 +85,7 @@ namespace Shadowsocks.View
             UpdateTexts();
             UpdateLog();
 
-            this.Menu = new MainMenu(new MenuItem[] {
-                CreateMenuGroup("&Control", new MenuItem[] {
-                    CreateMenuItem("&Disconnect direct connections", new EventHandler(this.DisconnectForward_Click)),
-                    CreateMenuItem("Disconnect &All", new EventHandler(this.Disconnect_Click)),
-                    new MenuItem("-"),
-                    CreateMenuItem("Clear &MaxSpeed", new EventHandler(this.ClearMaxSpeed_Click)),
-                    clearItem = CreateMenuItem("&Clear", new EventHandler(this.ClearItem_Click)),
-                    new MenuItem("-"),
-                    CreateMenuItem("Clear &Selected Total", new EventHandler(this.ClearSelectedTotal_Click)),
-                    CreateMenuItem("Clear &Total", new EventHandler(this.ClearTotal_Click)),
-                }),
-                CreateMenuGroup("Port &out", new MenuItem[] {
-                    CreateMenuItem("Copy current link", new EventHandler(this.copyLinkItem_Click)),
-                    CreateMenuItem("Copy current group links", new EventHandler(this.copyGroupLinkItem_Click)),
-                    CreateMenuItem("Copy all enable links", new EventHandler(this.copyEnableLinksItem_Click)),
-                    CreateMenuItem("Copy all links", new EventHandler(this.copyLinksItem_Click)),
-                }),
-                CreateMenuGroup("&Window", new MenuItem[] {
-                    CreateMenuItem("Auto &size", new EventHandler(this.autosizeItem_Click)),
-                    this.topmostItem = CreateMenuItem("Always On &Top", new EventHandler(this.topmostItem_Click)),
-                }),
-            });
+            InitMenu();
             controller.ConfigChanged += controller_ConfigChanged;
 
             for (int i = 0; i < ServerDataGrid.Columns.Count; ++i)
@@ -123,15 +105,39 @@ namespace Shadowsocks.View
             this.Width = width + SystemInformation.VerticalScrollBarWidth + (this.Width - this.ClientSize.Width) + 1;
             ServerDataGrid.AutoResizeColumnHeadersHeight();
         }
-        private MenuItem CreateMenuGroup(string text, MenuItem[] items)
-        {
-            return new MenuItem(I18N.GetString(text), items);
+
+        private void InitMenu()
+        { 
+	        this.topmostItem = CreateMenuItem("Always On &Top", this.topmostItem_Click);
+	        
+	        this.Menu = new MainMenu(new[]
+	        {
+		        CreateMenuGroup("&Control", new[]
+		        {
+			        CreateMenuItem("&Disconnect direct connections", this.DisconnectForward_Click),
+			        CreateMenuItem("Disconnect &All", this.Disconnect_Click),
+			        new MenuItem("-"),
+			        CreateMenuItem("Clear &MaxSpeed", this.ClearMaxSpeed_Click),
+			        clearItem = CreateMenuItem("&Clear", this.ClearItem_Click),
+			        new MenuItem("-"),
+			        CreateMenuItem("Clear &Selected Total", this.ClearSelectedTotal_Click),
+			        CreateMenuItem("Clear &Total", this.ClearTotal_Click),
+		        }),
+		        CreateMenuGroup("Port &out", new[]
+		        {
+			        CreateMenuItem("Copy current link", this.copyLinkItem_Click),
+			        CreateMenuItem("Copy current group links", this.copyGroupLinkItem_Click),
+			        CreateMenuItem("Copy all enable links", this.copyEnableLinksItem_Click),
+			        CreateMenuItem("Copy all links", this.copyLinksItem_Click),
+		        }),
+		        CreateMenuGroup("&Window", new[]
+		        {
+			        CreateMenuItem("Auto &size", AutoSizeColumnsAndForm),
+                    topmostItem
+                }),
+	        });
         }
 
-        private MenuItem CreateMenuItem(string text, EventHandler click)
-        {
-            return new MenuItem(I18N.GetString(text), click);
-        }
 
         private void UpdateTitle()
         {
@@ -155,54 +161,6 @@ namespace Shadowsocks.View
             UpdateTitle();
         }
 
-        private string FormatBytes(long bytes)
-        {
-            const long K = 1024L;
-            const long M = K * 1024L;
-            const long G = M * 1024L;
-            const long T = G * 1024L;
-            const long P = T * 1024L;
-            const long E = P * 1024L;
-
-            if (bytes >= M * 990)
-            {
-                if (bytes >= G * 990)
-                {
-                    if (bytes >= P * 990)
-                        return (bytes / (double)E).ToString("F3") + "E";
-                    if (bytes >= T * 990)
-                        return (bytes / (double)P).ToString("F3") + "P";
-                    return (bytes / (double)T).ToString("F3") + "T";
-                }
-                else
-                {
-                    if (bytes >= G * 99)
-                        return (bytes / (double)G).ToString("F2") + "G";
-                    if (bytes >= G * 9)
-                        return (bytes / (double)G).ToString("F3") + "G";
-                    return (bytes / (double)G).ToString("F4") + "G";
-                }
-            }
-            else
-            {
-                if (bytes >= K * 990)
-                {
-                    if (bytes >= M * 100)
-                        return (bytes / (double)M).ToString("F1") + "M";
-                    if (bytes > M * 9.9)
-                        return (bytes / (double)M).ToString("F2") + "M";
-                    return (bytes / (double)M).ToString("F3") + "M";
-                }
-                else
-                {
-                    if (bytes > K * 99)
-                        return (bytes / (double)K).ToString("F0") + "K";
-                    if (bytes > 900)
-                        return (bytes / (double)K).ToString("F1") + "K";
-                    return bytes.ToString();
-                }
-            }
-        }
 
         public bool SetBackColor(DataGridViewCell cell, Color newColor)
         {
@@ -640,58 +598,6 @@ namespace Shadowsocks.View
             }
         }
 
-        private void autosizeColumns()
-        {
-            for (int i = 0; i < ServerDataGrid.Columns.Count; ++i)
-            {
-                string name = ServerDataGrid.Columns[i].Name;
-                if (name == "AvgLatency"
-                    || name == "AvgDownSpeed"
-                    || name == "MaxDownSpeed"
-                    || name == "AvgUpSpeed"
-                    || name == "MaxUpSpeed"
-                    || name == "Upload"
-                    || name == "Download"
-                    || name == "DownloadRaw"
-                    || name == "Group"
-                    || name == "Connecting"
-                    || name == "ErrorPercent"
-                    || name == "ConnectError"
-                    || name == "ConnectTimeout"
-                    || name == "Continuous"
-                    || name == "ConnectEmpty"
-                    )
-                {
-                    if (ServerDataGrid.Columns[i].Width <= 2)
-                        continue;
-                    ServerDataGrid.AutoResizeColumn(i, DataGridViewAutoSizeColumnMode.AllCellsExceptHeader);
-                    if (name == "AvgLatency"
-                        || name == "Connecting"
-                        || name == "AvgDownSpeed"
-                        || name == "MaxDownSpeed"
-                        || name == "AvgUpSpeed"
-                        || name == "MaxUpSpeed"
-                        )
-                    {
-                        ServerDataGrid.Columns[i].MinimumWidth = ServerDataGrid.Columns[i].Width;
-                    }
-                }
-            }
-            int width = 0;
-            for (int i = 0; i < ServerDataGrid.Columns.Count; ++i)
-            {
-                if (!ServerDataGrid.Columns[i].Visible)
-                    continue;
-                width += ServerDataGrid.Columns[i].Width;
-            }
-            this.Width = width + SystemInformation.VerticalScrollBarWidth + (this.Width - this.ClientSize.Width) + 1;
-            ServerDataGrid.AutoResizeColumnHeadersHeight();
-        }
-
-        private void autosizeItem_Click(object sender, EventArgs e)
-        {
-            autosizeColumns();
-        }
 
         private void copyLinkItem_Click(object sender, EventArgs e)
         {
@@ -842,7 +748,7 @@ namespace Shadowsocks.View
             if (updateTick == 2 || updateSize == 1)
             {
                 updateSize = 0;
-                //autosizeColumns();
+                //AutoSizeColumnsAndForm();
             }
         }
 

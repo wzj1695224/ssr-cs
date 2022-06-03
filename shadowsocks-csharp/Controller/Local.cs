@@ -897,7 +897,7 @@ namespace Shadowsocks.Controller
                             ipAddress = Utils.QueryDns(host, null);
                         }
                     }
-                    Logging.Info($"DNS nolock query {host} answer {ipAddress.ToString()}");
+                    Logging.Info($"DNS nolock query {host} answer {ipAddress}");
                     if (ipAddress != null)
                     {
                         Utils.DnsBuffer.Set(host, new IPAddress(ipAddress.GetAddressBytes()));
