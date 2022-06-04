@@ -1,18 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
+using static Shadowsocks.Framework.Util.ByteUnit;
 
 
 namespace Shadowsocks.Framework.Util
 {
+	public static class ByteUnit
+	{
+	    public const long K = 1024L;
+		public const long M = K * 1024L;
+		public const long G = M * 1024L;
+		public const long T = G * 1024L;
+		public const long P = T * 1024L;
+		public const long E = P * 1024L;
+	}
+
+
+
+
 	public static class ByteUtil
 	{
-		private const long K = 1024L;
-		private const long M = K * 1024L;
-		private const long G = M * 1024L;
-		private const long T = G * 1024L;
-		private const long P = T * 1024L;
-		private const long E = P * 1024L;
-
 		private static readonly Dictionary<char, long> UNITS = new Dictionary<char, long>
 		{
 			{ 'K', K },

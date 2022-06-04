@@ -64,7 +64,7 @@
 			this.ConnectTimeout = new System.Windows.Forms.DataGridViewTextBoxColumn();
 			this.ConnectEmpty = new System.Windows.Forms.DataGridViewTextBoxColumn();
 			this.Continuous = new System.Windows.Forms.DataGridViewTextBoxColumn();
-			this.timer = new System.Windows.Forms.Timer(this.components);
+			this.updateTimer = new System.Windows.Forms.Timer(this.components);
 			this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
 			((System.ComponentModel.ISupportInitialize)(this.ServerDataGrid)).BeginInit();
 			this.tableLayoutPanel1.SuspendLayout();
@@ -301,11 +301,11 @@
 			this.Continuous.Visible = false;
 			this.Continuous.Width = 28;
 			// 
-			// timer
+			// updateTimer
 			// 
-			this.timer.Enabled = true;
-			this.timer.Interval = 250;
-			this.timer.Tick += new System.EventHandler(this.timer_Tick);
+			this.updateTimer.Enabled = true;
+			this.updateTimer.Interval = 250;
+			this.updateTimer.Tick += new System.EventHandler(this.UpdateTick);
 			// 
 			// tableLayoutPanel1
 			// 
@@ -342,7 +342,7 @@
         }
 
         #endregion
-        private System.Windows.Forms.Timer timer;
+        private System.Windows.Forms.Timer updateTimer;
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
         private DoubleBufferListView ServerDataGrid;
         private System.Windows.Forms.DataGridViewTextBoxColumn ID;

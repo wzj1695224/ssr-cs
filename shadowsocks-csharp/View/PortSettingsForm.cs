@@ -240,7 +240,7 @@ namespace Shadowsocks.View
 
         private string GetDisplayText(Server s)
         {
-            return (!string.IsNullOrEmpty(s.group) ? s.group + " - " : "    - ") + s.FriendlyName() + "        #" + s.id;
+            return (!string.IsNullOrEmpty(s.group) ? s.group + " - " : "    - ") + s.DecorName() + "        #" + s.id;
         }
 
         private string GetIDText(string id)

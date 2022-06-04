@@ -603,7 +603,7 @@ namespace Shadowsocks.View
                 else
                     group_name = server.group;
 
-                MenuItem item = new MenuItem(server.FriendlyName());
+                MenuItem item = new MenuItem(server.DecorName());
                 item.Tag = i;
                 item.Click += AServerItem_Click;
                 if (configuration.index == i)

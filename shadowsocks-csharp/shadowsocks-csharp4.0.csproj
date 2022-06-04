@@ -251,11 +251,12 @@
     <Compile Include="View\ServerLogForm.Designer.cs">
       <DependentUpon>ServerLogForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="View\ServerStat\ServerDataGrid_Events.cs" />
-    <Compile Include="View\ServerStat\ServerStatFormSizeHelper.cs" />
-    <Compile Include="View\ServerStat\ServerDataGrid_Helper.cs">
+    <Compile Include="View\ServerStat\Menu.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="View\ServerStat\ServerDataGrid.cs" />
+    <Compile Include="View\ServerStat\ServerDataGrid_Events.cs" />
+    <Compile Include="View\ServerStat\ServerStatFormSizeHelper.cs" />
     <Compile Include="View\SettingsForm.cs">
       <SubType>Form</SubType>
     </Compile>

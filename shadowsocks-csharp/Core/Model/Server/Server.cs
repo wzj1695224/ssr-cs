@@ -103,70 +103,36 @@ namespace Shadowsocks.Core.Model.Server
 			}
 		}
 
-		public string FriendlyName()
-		{
-			if (string.IsNullOrEmpty(server))
-			{
-				return I18N.GetString("New server");
-			}
-			if (string.IsNullOrEmpty(remarks_base64))
-			{
-				if (server.IndexOf(':') >= 0)
-				{
-					return "[" + server + "]:" + server_port;
-				}
-				else
-				{
-					return server + ":" + server_port;
-				}
-			}
-			else
-			{
-				if (server.IndexOf(':') >= 0)
-				{
-					return remarks + " ([" + server + "]:" + server_port + ")";
-				}
-				else
-				{
-					return remarks + " (" + server + ":" + server_port + ")";
-				}
-			}
-		}
 
 		public string HiddenName(bool hide = true)
 		{
+			return DecorName(hide);
+		}
+
+
+		public string DecorName(bool mask = false)
+		{
 			if (string.IsNullOrEmpty(server))
-			{
 				return I18N.GetString("New server");
-			}
-			string server_alter_name = server;
-			if (hide)
-			{
-				server_alter_name = Util.ServerName.HideServerAddr(server);
-			}
+
+			var host = mask ? Util.ServerName.HideServerAddr(server) : server;
+
 			if (string.IsNullOrEmpty(remarks_base64))
 			{
-				if (server.IndexOf(':') >= 0)
-				{
-					return "[" + server_alter_name + "]:" + server_port;
-				}
-				else
-				{
-					return server_alter_name + ":" + server_port;
-				}
+				var containColon = server.IndexOf(':') >= 0;
+				return containColon ?
+					$"[{host}]:{server_port}" :
+					$"{host}:{server_port}";
 			}
 			else
 			{
-				if (server.IndexOf(':') >= 0)
-				{
-					return remarks + " ([" + server_alter_name + "]:" + server_port + ")";
-				}
-				else
-				{
-					return remarks + " (" + server_alter_name + ":" + server_port + ")";
-				}
+				var containColon = server.IndexOf(':') >= 0;
+				return containColon ?
+					$"{remarks} ([{host}]:{server_port})" :
+					$"{remarks} ({host}:{server_port})";
 			}
 		}
+
 
 		public Server Clone()
 		{

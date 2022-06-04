@@ -38,14 +38,19 @@ namespace Shadowsocks.View
 		}
 
 
-		private void AutoSizeFinal()
+		private int CalcMinWidth()
 		{
 			var columnTotalWidth = ServerDataGrid.Columns.Cast<DataGridViewColumn>()
 				.Where(c => c.Visible)
 				.Sum(c => c.Width);
 
-			this.Width = columnTotalWidth + SystemInformation.VerticalScrollBarWidth + (this.Width - this.ClientSize.Width) + 1;
+			return columnTotalWidth + SystemInformation.VerticalScrollBarWidth + (this.Width - this.ClientSize.Width) + 1;
+		}
 
+
+		private void AutoSizeFinal()
+		{
+			this.Width = CalcMinWidth();
 			ServerDataGrid.AutoResizeColumnHeadersHeight();
 		}
 

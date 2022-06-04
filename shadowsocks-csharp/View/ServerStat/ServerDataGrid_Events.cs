@@ -190,7 +190,7 @@ namespace Shadowsocks.View
 				}
 			}
 
-			// sort by id order (by listOrder)
+			// sort by id order (by serverOrder)
 			if (e.SortResult == 0)
 			{
 				var idCell1 = ServerDataGrid[0, e.RowIndex1];
@@ -198,8 +198,8 @@ namespace Shadowsocks.View
 				var id1 = Convert.ToInt32(idCell1.Value);
 				var id2 = Convert.ToInt32(idCell2.Value);
 
-				var v1 = listOrder[id1];
-				var v2 = listOrder[id2];
+				var v1 = serverOrder[id1];
+				var v2 = serverOrder[id2];
 				e.SortResult = v1 - v2;
 				if (e.SortResult != 0 && ServerDataGrid.SortOrder == SortOrder.Descending)
 					e.SortResult = -e.SortResult;
