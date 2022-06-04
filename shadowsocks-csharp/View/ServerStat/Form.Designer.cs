@@ -107,7 +107,7 @@
 			this.ServerDataGrid.RowHeadersVisible = false;
 			this.ServerDataGrid.RowHeadersWidth = 62;
 			this.ServerDataGrid.RowTemplate.Height = 23;
-			this.ServerDataGrid.Size = new System.Drawing.Size(1476, 965);
+			this.ServerDataGrid.Size = new System.Drawing.Size(720, 480);
 			this.ServerDataGrid.TabIndex = 0;
 			// 
 			// ID
@@ -320,14 +320,14 @@
 			this.tableLayoutPanel1.Name = "tableLayoutPanel1";
 			this.tableLayoutPanel1.RowCount = 1;
 			this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle());
-			this.tableLayoutPanel1.Size = new System.Drawing.Size(1476, 965);
+			this.tableLayoutPanel1.Size = new System.Drawing.Size(960, 720);
 			this.tableLayoutPanel1.TabIndex = 1;
 			// 
 			// ServerStatForm
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(1476, 965);
+			this.ClientSize = new System.Drawing.Size(960, 720);
 			this.Controls.Add(this.tableLayoutPanel1);
 			this.Name = "ServerStatForm";
 			this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;

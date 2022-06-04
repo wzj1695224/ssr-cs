@@ -245,18 +245,18 @@
     <Compile Include="View\ResetPassword.Designer.cs">
       <DependentUpon>ResetPassword.cs</DependentUpon>
     </Compile>
-    <Compile Include="View\ServerStat\ServerStatForm.cs">
+    <Compile Include="View\ServerStat\Form.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="View\ServerStat\ServerStatForm.Designer.cs">
-      <DependentUpon>ServerStatForm.cs</DependentUpon>
+    <Compile Include="View\ServerStat\Form.Designer.cs">
+      <DependentUpon>Form.cs</DependentUpon>
     </Compile>
     <Compile Include="View\ServerStat\Menu.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="View\ServerStat\ServerDataGrid.cs" />
+    <Compile Include="View\ServerStat\ServerDataGrid_Update.cs" />
     <Compile Include="View\ServerStat\ServerDataGrid_Events.cs" />
-    <Compile Include="View\ServerStat\ServerStatFormSizeHelper.cs" />
+    <Compile Include="View\ServerStat\Size.cs" />
     <Compile Include="View\SettingsForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -296,8 +296,8 @@
     <EmbeddedResource Include="View\ResetPassword.resx">
       <DependentUpon>ResetPassword.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="View\ServerStat\ServerStatForm.resx">
-      <DependentUpon>ServerStatForm.cs</DependentUpon>
+    <EmbeddedResource Include="View\ServerStat\Form.resx">
+      <DependentUpon>Form.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="View\SettingsForm.resx">
       <DependentUpon>SettingsForm.cs</DependentUpon>

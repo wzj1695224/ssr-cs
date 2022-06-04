@@ -66,8 +66,26 @@ namespace Shadowsocks.View.ServerStat
             InitMenu();
             controller.ConfigChanged += OnConfigChanged;
 
-            InitServerDataGrid();
-            AutoSizeFinal();
+            int dpi_mul = Util.Utils.GetDpiMul();
+            for (int i = 0; i < ServerDataGrid.Columns.Count; ++i)
+            {
+                ServerDataGrid.Columns[i].Width = ServerDataGrid.Columns[i].Width * dpi_mul / 4;
+            }
+
+            ServerDataGrid.RowTemplate.Height = 20 * dpi_mul / 4;
+            //ServerDataGrid.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.None;
+            int width = 0;
+            for (int i = 0; i < ServerDataGrid.Columns.Count; ++i)
+            {
+                if (!ServerDataGrid.Columns[i].Visible)
+                    continue;
+                width += ServerDataGrid.Columns[i].Width;
+            }
+            this.Width = width + SystemInformation.VerticalScrollBarWidth + (this.Width - this.ClientSize.Width) + 1;
+            ServerDataGrid.AutoResizeColumnHeadersHeight();
+
+            // InitServerDataGrid();
+            // AutoSizeFinal();
         }
 
 

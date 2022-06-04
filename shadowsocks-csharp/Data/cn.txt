@@ -126,7 +126,7 @@ TTL=空闲断开秒数
 OK=确定
 Cancel=取消
 
-# ServerLog Form
+# ServerStat Form
 
 ServerStat=服务器记录
 &Control=操作(&C)
