@@ -1,6 +1,6 @@
-﻿namespace Shadowsocks.View
+﻿namespace Shadowsocks.View.ServerStat
 {
-    partial class ServerLogForm
+    partial class ServerStatForm
     {
         /// <summary>
         /// Required designer variable.
@@ -44,7 +44,7 @@
 			System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle13 = new System.Windows.Forms.DataGridViewCellStyle();
 			System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle14 = new System.Windows.Forms.DataGridViewCellStyle();
 			System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle15 = new System.Windows.Forms.DataGridViewCellStyle();
-			this.ServerDataGrid = new Shadowsocks.View.ServerLogForm.DoubleBufferListView();
+			this.ServerDataGrid = new DoubleBufferListView();
 			this.ID = new System.Windows.Forms.DataGridViewTextBoxColumn();
 			this.Group = new System.Windows.Forms.DataGridViewTextBoxColumn();
 			this.Server = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -323,18 +323,18 @@
 			this.tableLayoutPanel1.Size = new System.Drawing.Size(1476, 965);
 			this.tableLayoutPanel1.TabIndex = 1;
 			// 
-			// ServerLogForm
+			// ServerStatForm
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(1476, 965);
 			this.Controls.Add(this.tableLayoutPanel1);
-			this.Name = "ServerLogForm";
+			this.Name = "ServerStatForm";
 			this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
 			this.Text = "ServerStat";
-			this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.ServerLogForm_FormClosed);
-			this.ResizeEnd += new System.EventHandler(this.ServerLogForm_ResizeEnd);
-			this.Move += new System.EventHandler(this.ServerLogForm_Move);
+			this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.ServerStatForm_FormClosed);
+			this.ResizeEnd += new System.EventHandler(this.ServerStatForm_ResizeEnd);
+			this.Move += new System.EventHandler(this.ServerStatForm_Move);
 			((System.ComponentModel.ISupportInitialize)(this.ServerDataGrid)).EndInit();
 			this.tableLayoutPanel1.ResumeLayout(false);
 			this.ResumeLayout(false);

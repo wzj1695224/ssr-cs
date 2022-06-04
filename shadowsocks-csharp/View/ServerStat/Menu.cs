@@ -5,9 +5,9 @@ using Shadowsocks.Model;
 using static Shadowsocks.Framework.Windows.Forms.Menu.MenuFactory;
 
 
-namespace Shadowsocks.View
+namespace Shadowsocks.View.ServerStat
 {
-	public partial class ServerLogForm
+	public partial class ServerStatForm
 	{
         private MenuItem _clearMenu;
 		private MenuItem _alwaysTopMenu;

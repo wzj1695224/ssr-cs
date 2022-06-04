@@ -245,11 +245,11 @@
     <Compile Include="View\ResetPassword.Designer.cs">
       <DependentUpon>ResetPassword.cs</DependentUpon>
     </Compile>
-    <Compile Include="View\ServerLogForm.cs">
+    <Compile Include="View\ServerStat\ServerStatForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="View\ServerLogForm.Designer.cs">
-      <DependentUpon>ServerLogForm.cs</DependentUpon>
+    <Compile Include="View\ServerStat\ServerStatForm.Designer.cs">
+      <DependentUpon>ServerStatForm.cs</DependentUpon>
     </Compile>
     <Compile Include="View\ServerStat\Menu.cs">
       <SubType>Form</SubType>
@@ -296,8 +296,8 @@
     <EmbeddedResource Include="View\ResetPassword.resx">
       <DependentUpon>ResetPassword.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="View\ServerLogForm.resx">
-      <DependentUpon>ServerLogForm.cs</DependentUpon>
+    <EmbeddedResource Include="View\ServerStat\ServerStatForm.resx">
+      <DependentUpon>ServerStatForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="View\SettingsForm.resx">
       <DependentUpon>SettingsForm.cs</DependentUpon>

@@ -10,6 +10,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
+using Shadowsocks.View.ServerStat;
 using ZXing;
 using ZXing.Common;
 using ZXing.QrCode;
@@ -68,7 +69,7 @@ namespace Shadowsocks.View
 
         private ConfigForm configForm;
         private SettingsForm settingsForm;
-        private ServerLogForm serverLogForm;
+        private ServerStatForm _serverStatForm;
         private PortSettingsForm portMapForm;
         private SubscribeForm subScribeForm;
         private LogForm logForm;
@@ -719,24 +720,24 @@ namespace Shadowsocks.View
             }
         }
 
-        private void ShowServerLogForm()
+        private void ShowServerStatForm()
         {
-            if (serverLogForm != null)
+            if (_serverStatForm != null)
             {
-                serverLogForm.Activate();
-                serverLogForm.Update();
-                if (serverLogForm.WindowState == FormWindowState.Minimized)
+                _serverStatForm.Activate();
+                _serverStatForm.Update();
+                if (_serverStatForm.WindowState == FormWindowState.Minimized)
                 {
-                    serverLogForm.WindowState = FormWindowState.Normal;
+                    _serverStatForm.WindowState = FormWindowState.Normal;
                 }
             }
             else
             {
-                serverLogForm = new ServerLogForm(controller);
-                serverLogForm.Show();
-                serverLogForm.Activate();
-                serverLogForm.BringToFront();
-                serverLogForm.FormClosed += serverLogForm_FormClosed;
+                _serverStatForm = new ServerStatForm(controller);
+                _serverStatForm.Show();
+                _serverStatForm.Activate();
+                _serverStatForm.BringToFront();
+                _serverStatForm.FormClosed += serverStatForm_FormClosed;
             }
         }
 
@@ -803,9 +804,9 @@ namespace Shadowsocks.View
             Util.Utils.ReleaseMemory();
         }
 
-        void serverLogForm_FormClosed(object sender, FormClosedEventArgs e)
+        void serverStatForm_FormClosed(object sender, FormClosedEventArgs e)
         {
-            serverLogForm = null;
+            _serverStatForm = null;
             Util.Utils.ReleaseMemory();
         }
 
@@ -873,10 +874,10 @@ namespace Shadowsocks.View
                 configForm.Close();
                 configForm = null;
             }
-            if (serverLogForm != null)
+            if (_serverStatForm != null)
             {
-                serverLogForm.Close();
-                serverLogForm = null;
+                _serverStatForm.Close();
+                _serverStatForm = null;
             }
             if (timerDelayCheckUpdate != null)
             {
@@ -929,7 +930,7 @@ namespace Shadowsocks.View
                 SCA_key |= GetAsyncKeyState(Keys.Menu) < 0 ? 4 : 0;
                 if (SCA_key == 2)
                 {
-                    ShowServerLogForm();
+                    ShowServerStatForm();
                 }
                 else if (SCA_key == 1)
                 {
@@ -946,7 +947,7 @@ namespace Shadowsocks.View
             }
             else if (e.Button == MouseButtons.Middle)
             {
-                ShowServerLogForm();
+                ShowServerStatForm();
             }
         }
 
@@ -979,7 +980,7 @@ namespace Shadowsocks.View
 
         private void ShowServerLogItem_Click(object sender, EventArgs e)
         {
-            ShowServerLogForm();
+            ShowServerStatForm();
         }
 
         private void SubscribeSetting_Click(object sender, EventArgs e)

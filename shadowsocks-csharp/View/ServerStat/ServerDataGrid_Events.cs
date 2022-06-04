@@ -2,10 +2,10 @@
 using System.Linq;
 using System.Windows.Forms;
 using static Shadowsocks.Framework.Util.ByteUtil;
-using static Shadowsocks.View.ServerDataGridEventHelper;
+using static Shadowsocks.View.ServerStat.ServerDataGridEventHelper;
 
 
-namespace Shadowsocks.View
+namespace Shadowsocks.View.ServerStat
 {
 	internal static class ServerDataGridEventHelper
 	{
@@ -16,7 +16,7 @@ namespace Shadowsocks.View
 
 
 
-	public partial class ServerLogForm
+	public partial class ServerStatForm
 	{
 		private void InitServerDataGridEvents()
 		{

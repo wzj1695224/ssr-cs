@@ -7,11 +7,11 @@ using System.Windows.Forms;
 using static System.Int32;
 using static Shadowsocks.Framework.Util.ByteUnit;
 using static Shadowsocks.Framework.Util.ByteUtil;
-using static Shadowsocks.View.UpdateServerDataGridCellHelper;
+using static Shadowsocks.View.ServerStat.UpdateServerDataGridCellHelper;
 // ReSharper disable InconsistentNaming
 
 
-namespace Shadowsocks.View
+namespace Shadowsocks.View.ServerStat
 {
 	
 	internal static class UpdateServerDataGridCellHelper
@@ -60,7 +60,7 @@ namespace Shadowsocks.View
 
 
 
-	public partial class ServerLogForm
+	public partial class ServerStatForm
 	{
 		private long ServerDataGrid_CellChangedCount = 0;
 		private long ServerDataGrid_RowChangedCount  = 0;

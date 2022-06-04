@@ -4,7 +4,7 @@ using System.Windows.Forms;
 using Shadowsocks.Framework.Windows;
 
 
-namespace Shadowsocks.View
+namespace Shadowsocks.View.ServerStat
 {
 	internal static class ColumnSizeHelper
 	{
@@ -24,7 +24,7 @@ namespace Shadowsocks.View
 
 
 
-	public partial class ServerLogForm
+	public partial class ServerStatForm
 	{
 		private int CalcPreferHeight(int serverCount)
 		{

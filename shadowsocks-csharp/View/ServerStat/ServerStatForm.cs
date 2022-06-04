@@ -1,6 +1,6 @@
 ﻿using Shadowsocks.Controller;
 using Shadowsocks.Core;
-using Shadowsocks.Core.Model.Server;
+using Shadowsocks.Framework.Windows;
 using Shadowsocks.Model;
 using System;
 using System.Collections.Generic;
@@ -9,14 +9,12 @@ using System.Drawing;
 using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
-using Shadowsocks.Framework.Windows;
-using Shadowsocks.SystemX.Drawing;
 using static Shadowsocks.Controller.I18N.Static;
 
 
-namespace Shadowsocks.View
+namespace Shadowsocks.View.ServerStat
 {
-	public partial class ServerLogForm : Form
+	public partial class ServerStatForm : Form
     {
         class DoubleBufferListView : DataGridView
         {
@@ -48,7 +46,7 @@ namespace Shadowsocks.View
 
 
 
-        public ServerLogForm(ShadowsocksController controller)
+        public ServerStatForm(ShadowsocksController controller)
         {
             this.controller = controller;
 
@@ -237,7 +235,7 @@ namespace Shadowsocks.View
 
         #region Window Events
 
-        private void ServerLogForm_FormClosed(object sender, FormClosedEventArgs e)
+        private void ServerStatForm_FormClosed(object sender, FormClosedEventArgs e)
         {
             controller.ConfigChanged -= OnConfigChanged;
 
@@ -253,13 +251,13 @@ namespace Shadowsocks.View
         }
 
 
-        private void ServerLogForm_Move(object sender, EventArgs e)
+        private void ServerStatForm_Move(object sender, EventArgs e)
         {
             _updateSkip = 0;
         }
 
 
-        private void ServerLogForm_ResizeEnd(object sender, EventArgs e)
+        private void ServerStatForm_ResizeEnd(object sender, EventArgs e)
         {
             _updateSkip = 0;
 
