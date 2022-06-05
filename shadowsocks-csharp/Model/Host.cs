@@ -1,30 +1,33 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net;
-using System.Text;
+
 
 namespace Shadowsocks.Model
 {
-    class HostNode
+	internal class HostNode
     {
-        public bool include_sub;
-        public string addr;
-        public Dictionary<string, HostNode> subnode;
+        public bool IncludeSub;
+        public string Addr;
+        public Dictionary<string, HostNode> Subnode;
 
         public HostNode()
         {
-            include_sub = false;
-            addr = "";
-            subnode = new Dictionary<string, HostNode>();
+            IncludeSub = false;
+            Addr = "";
+            Subnode = new Dictionary<string, HostNode>();
         }
 
         public HostNode(bool sub, string addr)
         {
-            include_sub = sub;
-            this.addr = addr;
-            subnode = null;
+            IncludeSub = sub;
+            this.Addr = addr;
+            Subnode = null;
         }
     }
+
+
+
 
     public class HostMap
     {
@@ -34,128 +37,144 @@ namespace Shadowsocks.Model
         static HostMap instance = new HostMap();
         const string HOST_FILENAME = "user.rule";
 
+
         public static HostMap Instance()
         {
             return instance;
         }
 
+
         public void Clear(HostMap newInstance)
         {
-            if (newInstance == null)
+	        instance = newInstance ?? new HostMap();
+        }
+
+
+
+
+        public bool LoadHostFile()
+        {
+            var filePath = System.IO.Path.Combine(System.Windows.Forms.Application.StartupPath, HOST_FILENAME);
+
+            try
             {
-                instance = new HostMap();
+                if (System.IO.File.Exists(filePath))
+                {
+                    LoadHostFile(filePath);
+                    return true;
+                }
             }
-            else
+            catch
             {
-                instance = newInstance;
+                // ignored
+            }
+            return false;
+        }
+
+
+        private void LoadHostFile(string filePath)
+        {
+            using (var stream = System.IO.File.OpenText(filePath))
+            {
+                while (true)
+                {
+                    var line = stream.ReadLine();
+                    if (line == null)
+                        break;
+                    if (line.Length > 0 && line.StartsWith("#"))
+                        continue;
+                    var parts = line.Split(new[] { ' ', '\t' }, 2, StringSplitOptions.RemoveEmptyEntries);
+                    if (parts.Length < 2)
+                        continue;
+                    AddHost(parts[0], parts[1]);
+                }
             }
         }
 
+
+
+
         public void AddHost(string host, string addr)
         {
-            IPAddress ip_addr = null;
-            if (IPAddress.TryParse(host, out ip_addr))
+	        if (IPAddress.TryParse(host, out _))
             {
-                string[] addr_parts = addr.Split(new char[] { ' ', '\t', }, 2, StringSplitOptions.RemoveEmptyEntries);
-                if (addr_parts.Length >= 2)
+                var addrParts = addr.Split(new char[] { ' ', '\t', }, 2, StringSplitOptions.RemoveEmptyEntries);
+                if (addrParts.Length >= 2)
                 {
-                    ips.insert(new IPAddressCmp(host), new IPAddressCmp(addr_parts[0]), addr_parts[1]);
+	                var ipStart = new IPAddressCmp(host);
+	                var ipEnd = new IPAddressCmp(addrParts[0]);
+	                ips.Insert(ipStart, ipEnd, addrParts[1]);
                     return;
                 }
             }
 
-            string[] parts = host.Split('.');
-            Dictionary<string, HostNode> node = root;
-            bool include_sub = false;
-            int end = 0;
+            var parts = host.Split('.');
+            var node = root;
+
+            var includeSub = false;
+            var end = 0;
             if (parts[0].Length == 0)
             {
                 end = 1;
-                include_sub = true;
+                includeSub = true;
             }
-            for (int i = parts.Length - 1; i > end; --i)
+
+            for (var i = parts.Length - 1; i > end; --i)
             {
                 if (!node.ContainsKey(parts[i]))
-                {
-                    node[parts[i]] = new HostNode();
-                }
-                if (node[parts[i]].subnode == null)
-                {
-                    node[parts[i]].subnode = new Dictionary<string, HostNode>();
-                }
-                node = node[parts[i]].subnode;
+	                node[parts[i]] = new HostNode();
+
+                if (node[parts[i]].Subnode == null)
+	                node[parts[i]].Subnode = new Dictionary<string, HostNode>();
+
+                node = node[parts[i]].Subnode;
             }
-            node[parts[end]] = new HostNode(include_sub, addr);
+            node[parts[end]] = new HostNode(includeSub, addr);
         }
+
+
+
 
         public bool GetHost(string host, out string addr)
         {
-            string[] parts = host.Split('.');
-            Dictionary<string, HostNode> node = root;
             addr = null;
-            for (int i = parts.Length - 1; i >= 0; --i)
+            var parts = host.Split('.');
+
+            var node = root;
+            for (var i = parts.Length - 1; i >= 0; --i)
             {
-                if (!node.ContainsKey(parts[i]))
+	            var part = parts[i];
+	            if (!node.ContainsKey(part))
+	                return false;
+                
+                if (node[part].Addr.Length > 0 || node[part].IncludeSub)
                 {
-                    return false;
-                }
-                if (node[parts[i]].addr.Length > 0 || node[parts[i]].include_sub)
-                {
-                    addr = node[parts[i]].addr;
+                    addr = node[part].Addr;
                     return true;
                 }
                 if (node.ContainsKey("*"))
                 {
-                    addr = node["*"].addr;
+                    addr = node["*"].Addr;
                     return true;
                 }
-                if (node[parts[i]].subnode == null)
-                {
-                    return false;
-                }
-                node = node[parts[i]].subnode;
+
+                if (node[part].Subnode == null)
+	                return false;
+                
+                node = node[part].Subnode;
             }
             return false;
         }
 
+
+
+
         public bool GetIP(IPAddress ip, out string addr)
         {
-            string host = ip.ToString();
+            var host = ip.ToString();
             addr = ips.Get(new IPAddressCmp(host)) as string;
             return addr != null;
         }
 
-        public bool LoadHostFile()
-        {
-            string filename = HOST_FILENAME;
-            string absFilePath = System.IO.Path.Combine(System.Windows.Forms.Application.StartupPath, filename);
-            if (System.IO.File.Exists(absFilePath))
-            {
-                try
-                {
-                    using (System.IO.StreamReader stream = System.IO.File.OpenText(absFilePath))
-                    {
-                        while (true)
-                        {
-                            string line = stream.ReadLine();
-                            if (line == null)
-                                break;
-                            if (line.Length > 0 && line.StartsWith("#"))
-                                continue;
-                            string[] parts = line.Split(new char[] { ' ', '\t', }, 2, StringSplitOptions.RemoveEmptyEntries);
-                            if (parts.Length < 2)
-                                continue;
-                            AddHost(parts[0], parts[1]);
-                        }
-                    }
-                    return true;
-                }
-                catch
-                {
-                    return false;
-                }
-            }
-            return false;
-        }
     }
 }
