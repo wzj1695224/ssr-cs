@@ -55,6 +55,7 @@ namespace Shadowsocks.View.ServerStat
 		{
 			var config = controller.GetCurrentConfiguration();
 			var server = config.configs[id];
+			var host = server.server;
 
 			switch (column.Name)
 			{
@@ -80,6 +81,9 @@ namespace Shadowsocks.View.ServerStat
 				case "Enable":
 					server.enable = !server.enable;
 					controller.SelectServerIndex(config.index);
+					break;
+				case "Ping":
+					_serverDiagnostic.PingAsync(host, false);
 					break;
 			}
 		}
@@ -172,6 +176,7 @@ namespace Shadowsocks.View.ServerStat
 					e.SortResult = v1 == v2 ? 0 : v1 < v2 ? -1 : 1;
 					break;
 				}
+				case "Ping":
 				case "AvgLatency":
 				case "AvgDownSpeed":
 				case "MaxDownSpeed":

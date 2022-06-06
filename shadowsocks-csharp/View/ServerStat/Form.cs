@@ -9,6 +9,7 @@ using System.Drawing;
 using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
+using Shadowsocks.Controller.ServerStat;
 using static Shadowsocks.Controller.I18N.Static;
 
 
@@ -31,6 +32,8 @@ namespace Shadowsocks.View.ServerStat
 
 
         private ShadowsocksController controller;
+        private ServerDiagnostic _serverDiagnostic;
+
         //private ContextMenu contextMenu1;
         private List<int> serverOrder = new List<int>();
 
@@ -46,9 +49,10 @@ namespace Shadowsocks.View.ServerStat
 
 
 
-        public ServerStatForm(ShadowsocksController controller)
+        public ServerStatForm(ShadowsocksController controller, ServerDiagnostic serverDiagnostic)
         {
             this.controller = controller;
+            this._serverDiagnostic = serverDiagnostic;
 
             this.Icon = ResourceFactory.CreateIcon();
             this.Font = SystemFonts.MessageBoxFont;
@@ -66,26 +70,8 @@ namespace Shadowsocks.View.ServerStat
             InitMenu();
             controller.ConfigChanged += OnConfigChanged;
 
-            int dpi_mul = Util.Utils.GetDpiMul();
-            for (int i = 0; i < ServerDataGrid.Columns.Count; ++i)
-            {
-                ServerDataGrid.Columns[i].Width = ServerDataGrid.Columns[i].Width * dpi_mul / 4;
-            }
-
-            ServerDataGrid.RowTemplate.Height = 20 * dpi_mul / 4;
-            //ServerDataGrid.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.None;
-            int width = 0;
-            for (int i = 0; i < ServerDataGrid.Columns.Count; ++i)
-            {
-                if (!ServerDataGrid.Columns[i].Visible)
-                    continue;
-                width += ServerDataGrid.Columns[i].Width;
-            }
-            this.Width = width + SystemInformation.VerticalScrollBarWidth + (this.Width - this.ClientSize.Width) + 1;
-            ServerDataGrid.AutoResizeColumnHeadersHeight();
-
-            // InitServerDataGrid();
-            // AutoSizeFinal();
+            InitServerDataGrid();
+            AutoSizeFinal();
         }
 
 
@@ -253,7 +239,7 @@ namespace Shadowsocks.View.ServerStat
 
         #region Window Events
 
-        private void ServerStatForm_FormClosed(object sender, FormClosedEventArgs e)
+        private void Form_FormClosed(object sender, FormClosedEventArgs e)
         {
             controller.ConfigChanged -= OnConfigChanged;
 
@@ -269,13 +255,13 @@ namespace Shadowsocks.View.ServerStat
         }
 
 
-        private void ServerStatForm_Move(object sender, EventArgs e)
+        private void Form_Move(object sender, EventArgs e)
         {
             _updateSkip = 0;
         }
 
 
-        private void ServerStatForm_ResizeEnd(object sender, EventArgs e)
+        private void Form_ResizeEnd(object sender, EventArgs e)
         {
             _updateSkip = 0;
 

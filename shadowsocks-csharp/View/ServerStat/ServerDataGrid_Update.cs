@@ -3,6 +3,7 @@ using Shadowsocks.SystemX.Drawing;
 using System;
 using System.Diagnostics;
 using System.Drawing;
+using System.Linq;
 using System.Windows.Forms;
 using static System.Int32;
 using static Shadowsocks.Framework.Util.ByteUnit;
@@ -17,6 +18,10 @@ namespace Shadowsocks.View.ServerStat
 	internal static class UpdateServerDataGridCellHelper
 	{
 		internal static readonly int	 MaxRowsPerUpdate		 = 100;
+
+		// Connecting Level
+		internal static readonly long[]  PingLevelTime           = { 0,            50,                200,           500,        65536 };
+		internal static readonly Color[] PingLevelColors         = { Color.Green,  Color.LightGreen,  Color.Yellow,  Color.Red,  Color.Red };
 
 		// Connecting Level
 		internal static readonly long[]  ConnectingLevelCount    = { 0,            16,                32,            64,         65536 };
@@ -148,16 +153,24 @@ namespace Shadowsocks.View.ServerStat
 			var cell = ServerDataGrid[col, row];
 			var server = config.configs[id];
 			var serverSpeedLog = _serverStats[id];
+			var host = server.server;
 
 			switch (column.Name)
 			{
 				case "Server":
-					{
-						var color = config.index == id ? Color.Cyan : Color.White;
-						SetCellBackColor(cell, color);
-						SetCellText(cell, server.DecorName());
-						break;
-					}
+				{
+					var color = config.index == id ? Color.Cyan : Color.White;
+					SetCellBackColor(cell, color);
+					SetCellText(cell, server.SimpleName());
+					break;
+				}
+				case "ServerAddr":
+				{
+					var color = config.index == id ? Color.Cyan : Color.White; 
+					SetCellBackColor(cell, color);
+					SetCellText(cell, server.Addr());
+					break;
+				}
 				case "Group":
 					SetCellText(cell, server.group);
 					break;
@@ -171,11 +184,39 @@ namespace Shadowsocks.View.ServerStat
 					SetCellText(cell, serverSpeedLog.totalConnectTimes);
 					break;
 				case "Connecting":
+				{
+					var connecting = serverSpeedLog.totalConnectTimes - serverSpeedLog.totalDisconnectTimes;
+					var color = GetLevelColor(connecting, ConnectingLevelCount, ConnectingLevelColors);
+					SetCellBackColor(cell, color);
+					SetCellText(cell, connecting);
+					break;
+				}
+				case "Ping":
 					{
-						var connecting = serverSpeedLog.totalConnectTimes - serverSpeedLog.totalDisconnectTimes;
-						var color = GetLevelColor(connecting, ConnectingLevelCount, ConnectingLevelColors);
-						SetCellBackColor(cell, color);
-						SetCellText(cell, connecting);
+						if ( _serverDiagnostic.IsPinging(host) )
+						{
+							SetCellText(cell, "...");
+							SetCellBackColor(cell, Color.White);
+							break;
+						}
+						
+						if (_serverDiagnostic.TryGetHostPingHistory(host, out var history))
+						{
+							var pingAvg = history[0]?.Replies
+								.Select(r => r.RoundtripTime)
+								.Average();
+							if (pingAvg != null)
+							{
+								var ping = (long)pingAvg;
+								var color = GetLevelColor(ping, PingLevelTime, PingLevelColors);
+								SetCellBackColor(cell, color); 
+								SetCellText(cell, ping);
+								break;
+							}
+						}
+
+						SetCellText(cell, "-");
+						SetCellBackColor(cell, Color.White);
 						break;
 					}
 				case "AvgLatency" when serverSpeedLog.avgConnectTime >= 0:
@@ -206,41 +247,41 @@ namespace Shadowsocks.View.ServerStat
 					ServerDataGrid_UpdateAwareChangeCell(cell, serverSpeedLog.totalDownloadRawBytes, DownRawTotalSteadyColor, DownRawTotalResetColor);
 					break;
 				case "ConnectError":
-					{
-						var val = serverSpeedLog.errorConnectTimes + serverSpeedLog.errorDecodeTimes;
-						var color = Color.FromArgb(255, (byte)Math.Max(0, 255 - val * 2.5), (byte)Math.Max(0, 255 - val * 2.5));
-						SetCellBackColor(cell, color);
-						SetCellText(cell, val);
-						break;
-					}
+				{
+					var val = serverSpeedLog.errorConnectTimes + serverSpeedLog.errorDecodeTimes;
+					var color = Color.FromArgb(255, (byte)Math.Max(0, 255 - val * 2.5), (byte)Math.Max(0, 255 - val * 2.5));
+					SetCellBackColor(cell, color);
+					SetCellText(cell, val);
+					break;
+				}
 				case "ConnectTimeout":
 					SetCellText(cell, serverSpeedLog.errorTimeoutTimes);
 					break;
 				case "ConnectEmpty":
-					{
-						var val = serverSpeedLog.errorEmptyTimes;
-						var color = Color.FromArgb(255, (byte)Math.Max(0, 255 - val * 8), (byte)Math.Max(0, 255 - val * 8));
-						SetCellBackColor(cell, color);
-						SetCellText(cell, val);
-						break;
-					}
+				{
+					var val = serverSpeedLog.errorEmptyTimes;
+					var color = Color.FromArgb(255, (byte)Math.Max(0, 255 - val * 8), (byte)Math.Max(0, 255 - val * 8));
+					SetCellBackColor(cell, color);
+					SetCellText(cell, val);
+					break;
+				}
 				case "Continuous":
-					{
-						var val = serverSpeedLog.errorContinurousTimes;
-						var color = Color.FromArgb(255, (byte)Math.Max(0, 255 - val * 8), (byte)Math.Max(0, 255 - val * 8));
-						SetCellBackColor(cell, color);
-						SetCellText(cell, val);
-						break;
-					}
+				{
+					var val = serverSpeedLog.errorContinurousTimes;
+					var color = Color.FromArgb(255, (byte)Math.Max(0, 255 - val * 8), (byte)Math.Max(0, 255 - val * 8));
+					SetCellBackColor(cell, color);
+					SetCellText(cell, val);
+					break;
+				}
 				case "ErrorPercent" when serverSpeedLog.errorLogTimes + serverSpeedLog.totalConnectTimes - serverSpeedLog.totalDisconnectTimes > 0:
-					{
-						var percent = (serverSpeedLog.errorConnectTimes + serverSpeedLog.errorTimeoutTimes + serverSpeedLog.errorDecodeTimes)
+				{
+					var percent = (serverSpeedLog.errorConnectTimes + serverSpeedLog.errorTimeoutTimes + serverSpeedLog.errorDecodeTimes)
 									  * 100.00
 									  / (serverSpeedLog.errorLogTimes + serverSpeedLog.totalConnectTimes - serverSpeedLog.totalDisconnectTimes);
-						SetCellBackColor(cell, Color.FromArgb(255, (byte)(255 - percent * 2), (byte)(255 - percent * 2)));
-						SetCellText(cell, percent.ToString("F0") + "%");
-						break;
-					}
+					SetCellBackColor(cell, Color.FromArgb(255, (byte)(255 - percent * 2), (byte)(255 - percent * 2)));
+					SetCellText(cell, percent.ToString("F0") + "%");
+					break;
+				}
 				case "ErrorPercent":
 					SetCellBackColor(cell, Color.White);
 					SetCellText(cell, "-");

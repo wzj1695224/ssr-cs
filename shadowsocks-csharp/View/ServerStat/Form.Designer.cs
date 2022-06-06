@@ -44,13 +44,19 @@
 			System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle13 = new System.Windows.Forms.DataGridViewCellStyle();
 			System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle14 = new System.Windows.Forms.DataGridViewCellStyle();
 			System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle15 = new System.Windows.Forms.DataGridViewCellStyle();
-			this.ServerDataGrid = new DoubleBufferListView();
+			System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle16 = new System.Windows.Forms.DataGridViewCellStyle();
+			System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle17 = new System.Windows.Forms.DataGridViewCellStyle();
+			this.ServerDataGrid = new Shadowsocks.View.ServerStat.ServerStatForm.DoubleBufferListView();
+			this.updateTimer = new System.Windows.Forms.Timer(this.components);
+			this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
 			this.ID = new System.Windows.Forms.DataGridViewTextBoxColumn();
 			this.Group = new System.Windows.Forms.DataGridViewTextBoxColumn();
 			this.Server = new System.Windows.Forms.DataGridViewTextBoxColumn();
+			this.ServerAddr = new System.Windows.Forms.DataGridViewTextBoxColumn();
 			this.Enable = new System.Windows.Forms.DataGridViewTextBoxColumn();
 			this.TotalConnect = new System.Windows.Forms.DataGridViewTextBoxColumn();
 			this.Connecting = new System.Windows.Forms.DataGridViewTextBoxColumn();
+			this.Ping = new System.Windows.Forms.DataGridViewTextBoxColumn();
 			this.AvgLatency = new System.Windows.Forms.DataGridViewTextBoxColumn();
 			this.AvgDownSpeed = new System.Windows.Forms.DataGridViewTextBoxColumn();
 			this.MaxDownSpeed = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -64,8 +70,6 @@
 			this.ConnectTimeout = new System.Windows.Forms.DataGridViewTextBoxColumn();
 			this.ConnectEmpty = new System.Windows.Forms.DataGridViewTextBoxColumn();
 			this.Continuous = new System.Windows.Forms.DataGridViewTextBoxColumn();
-			this.updateTimer = new System.Windows.Forms.Timer(this.components);
-			this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
 			((System.ComponentModel.ISupportInitialize)(this.ServerDataGrid)).BeginInit();
 			this.tableLayoutPanel1.SuspendLayout();
 			this.SuspendLayout();
@@ -81,9 +85,11 @@
             this.ID,
             this.Group,
             this.Server,
+            this.ServerAddr,
             this.Enable,
             this.TotalConnect,
             this.Connecting,
+            this.Ping,
             this.AvgLatency,
             this.AvgDownSpeed,
             this.MaxDownSpeed,
@@ -107,8 +113,30 @@
 			this.ServerDataGrid.RowHeadersVisible = false;
 			this.ServerDataGrid.RowHeadersWidth = 62;
 			this.ServerDataGrid.RowTemplate.Height = 23;
-			this.ServerDataGrid.Size = new System.Drawing.Size(720, 480);
+			this.ServerDataGrid.Size = new System.Drawing.Size(960, 720);
 			this.ServerDataGrid.TabIndex = 0;
+			// 
+			// updateTimer
+			// 
+			this.updateTimer.Enabled = true;
+			this.updateTimer.Interval = 250;
+			this.updateTimer.Tick += new System.EventHandler(this.UpdateTick);
+			// 
+			// tableLayoutPanel1
+			// 
+			this.tableLayoutPanel1.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+			this.tableLayoutPanel1.ColumnCount = 1;
+			this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
+			this.tableLayoutPanel1.Controls.Add(this.ServerDataGrid, 0, 0);
+			this.tableLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
+			this.tableLayoutPanel1.GrowStyle = System.Windows.Forms.TableLayoutPanelGrowStyle.FixedSize;
+			this.tableLayoutPanel1.Location = new System.Drawing.Point(0, 0);
+			this.tableLayoutPanel1.Margin = new System.Windows.Forms.Padding(0);
+			this.tableLayoutPanel1.Name = "tableLayoutPanel1";
+			this.tableLayoutPanel1.RowCount = 1;
+			this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle());
+			this.tableLayoutPanel1.Size = new System.Drawing.Size(960, 720);
+			this.tableLayoutPanel1.TabIndex = 1;
 			// 
 			// ID
 			// 
@@ -136,7 +164,19 @@
 			this.Server.MinimumWidth = 2;
 			this.Server.Name = "Server";
 			this.Server.ReadOnly = true;
-			this.Server.Width = 88;
+			this.Server.Width = 220;
+			// 
+			// ServerAddr
+			// 
+			dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+			dataGridViewCellStyle3.Font = new System.Drawing.Font("Consolas", 8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.ServerAddr.DefaultCellStyle = dataGridViewCellStyle3;
+			this.ServerAddr.HeaderText = "";
+			this.ServerAddr.MinimumWidth = 8;
+			this.ServerAddr.Name = "ServerAddr";
+			this.ServerAddr.ReadOnly = true;
+			this.ServerAddr.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
+			this.ServerAddr.Width = 140;
 			// 
 			// Enable
 			// 
@@ -159,18 +199,29 @@
 			// 
 			// Connecting
 			// 
-			dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-			this.Connecting.DefaultCellStyle = dataGridViewCellStyle3;
+			dataGridViewCellStyle4.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+			this.Connecting.DefaultCellStyle = dataGridViewCellStyle4;
 			this.Connecting.HeaderText = "Connecting";
 			this.Connecting.MinimumWidth = 16;
 			this.Connecting.Name = "Connecting";
 			this.Connecting.ReadOnly = true;
 			this.Connecting.Width = 28;
 			// 
+			// Ping
+			// 
+			dataGridViewCellStyle5.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+			dataGridViewCellStyle5.Font = new System.Drawing.Font("Consolas", 8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.Ping.DefaultCellStyle = dataGridViewCellStyle5;
+			this.Ping.HeaderText = "Ping";
+			this.Ping.MinimumWidth = 36;
+			this.Ping.Name = "Ping";
+			this.Ping.ReadOnly = true;
+			this.Ping.Width = 48;
+			// 
 			// AvgLatency
 			// 
-			dataGridViewCellStyle4.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-			this.AvgLatency.DefaultCellStyle = dataGridViewCellStyle4;
+			dataGridViewCellStyle6.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+			this.AvgLatency.DefaultCellStyle = dataGridViewCellStyle6;
 			this.AvgLatency.HeaderText = "Latency";
 			this.AvgLatency.MinimumWidth = 36;
 			this.AvgLatency.Name = "AvgLatency";
@@ -179,8 +230,8 @@
 			// 
 			// AvgDownSpeed
 			// 
-			dataGridViewCellStyle5.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-			this.AvgDownSpeed.DefaultCellStyle = dataGridViewCellStyle5;
+			dataGridViewCellStyle7.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+			this.AvgDownSpeed.DefaultCellStyle = dataGridViewCellStyle7;
 			this.AvgDownSpeed.HeaderText = "Avg DSpeed";
 			this.AvgDownSpeed.MinimumWidth = 60;
 			this.AvgDownSpeed.Name = "AvgDownSpeed";
@@ -189,8 +240,8 @@
 			// 
 			// MaxDownSpeed
 			// 
-			dataGridViewCellStyle6.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-			this.MaxDownSpeed.DefaultCellStyle = dataGridViewCellStyle6;
+			dataGridViewCellStyle8.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+			this.MaxDownSpeed.DefaultCellStyle = dataGridViewCellStyle8;
 			this.MaxDownSpeed.HeaderText = "Max DSpeed";
 			this.MaxDownSpeed.MinimumWidth = 2;
 			this.MaxDownSpeed.Name = "MaxDownSpeed";
@@ -199,8 +250,8 @@
 			// 
 			// AvgUpSpeed
 			// 
-			dataGridViewCellStyle7.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-			this.AvgUpSpeed.DefaultCellStyle = dataGridViewCellStyle7;
+			dataGridViewCellStyle9.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+			this.AvgUpSpeed.DefaultCellStyle = dataGridViewCellStyle9;
 			this.AvgUpSpeed.HeaderText = "Avg UpSpeed";
 			this.AvgUpSpeed.MinimumWidth = 60;
 			this.AvgUpSpeed.Name = "AvgUpSpeed";
@@ -209,8 +260,8 @@
 			// 
 			// MaxUpSpeed
 			// 
-			dataGridViewCellStyle8.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-			this.MaxUpSpeed.DefaultCellStyle = dataGridViewCellStyle8;
+			dataGridViewCellStyle10.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+			this.MaxUpSpeed.DefaultCellStyle = dataGridViewCellStyle10;
 			this.MaxUpSpeed.HeaderText = "Max UpSpeed";
 			this.MaxUpSpeed.MinimumWidth = 2;
 			this.MaxUpSpeed.Name = "MaxUpSpeed";
@@ -219,8 +270,8 @@
 			// 
 			// Download
 			// 
-			dataGridViewCellStyle9.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-			this.Download.DefaultCellStyle = dataGridViewCellStyle9;
+			dataGridViewCellStyle11.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+			this.Download.DefaultCellStyle = dataGridViewCellStyle11;
 			this.Download.HeaderText = "Dload";
 			this.Download.MinimumWidth = 2;
 			this.Download.Name = "Download";
@@ -229,8 +280,8 @@
 			// 
 			// Upload
 			// 
-			dataGridViewCellStyle10.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-			this.Upload.DefaultCellStyle = dataGridViewCellStyle10;
+			dataGridViewCellStyle12.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+			this.Upload.DefaultCellStyle = dataGridViewCellStyle12;
 			this.Upload.HeaderText = "Upload";
 			this.Upload.MinimumWidth = 2;
 			this.Upload.Name = "Upload";
@@ -239,8 +290,8 @@
 			// 
 			// DownloadRaw
 			// 
-			dataGridViewCellStyle11.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-			this.DownloadRaw.DefaultCellStyle = dataGridViewCellStyle11;
+			dataGridViewCellStyle13.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+			this.DownloadRaw.DefaultCellStyle = dataGridViewCellStyle13;
 			this.DownloadRaw.HeaderText = "DloadRaw";
 			this.DownloadRaw.MinimumWidth = 2;
 			this.DownloadRaw.Name = "DownloadRaw";
@@ -259,8 +310,8 @@
 			// 
 			// ConnectError
 			// 
-			dataGridViewCellStyle12.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-			this.ConnectError.DefaultCellStyle = dataGridViewCellStyle12;
+			dataGridViewCellStyle14.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+			this.ConnectError.DefaultCellStyle = dataGridViewCellStyle14;
 			this.ConnectError.HeaderText = "Error";
 			this.ConnectError.MinimumWidth = 2;
 			this.ConnectError.Name = "ConnectError";
@@ -270,8 +321,8 @@
 			// 
 			// ConnectTimeout
 			// 
-			dataGridViewCellStyle13.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-			this.ConnectTimeout.DefaultCellStyle = dataGridViewCellStyle13;
+			dataGridViewCellStyle15.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+			this.ConnectTimeout.DefaultCellStyle = dataGridViewCellStyle15;
 			this.ConnectTimeout.HeaderText = "Timeout";
 			this.ConnectTimeout.MinimumWidth = 2;
 			this.ConnectTimeout.Name = "ConnectTimeout";
@@ -281,8 +332,8 @@
 			// 
 			// ConnectEmpty
 			// 
-			dataGridViewCellStyle14.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-			this.ConnectEmpty.DefaultCellStyle = dataGridViewCellStyle14;
+			dataGridViewCellStyle16.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+			this.ConnectEmpty.DefaultCellStyle = dataGridViewCellStyle16;
 			this.ConnectEmpty.HeaderText = "Empty Response";
 			this.ConnectEmpty.MinimumWidth = 2;
 			this.ConnectEmpty.Name = "ConnectEmpty";
@@ -292,36 +343,14 @@
 			// 
 			// Continuous
 			// 
-			dataGridViewCellStyle15.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-			this.Continuous.DefaultCellStyle = dataGridViewCellStyle15;
+			dataGridViewCellStyle17.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+			this.Continuous.DefaultCellStyle = dataGridViewCellStyle17;
 			this.Continuous.HeaderText = "Continuous";
 			this.Continuous.MinimumWidth = 8;
 			this.Continuous.Name = "Continuous";
 			this.Continuous.ReadOnly = true;
 			this.Continuous.Visible = false;
 			this.Continuous.Width = 28;
-			// 
-			// updateTimer
-			// 
-			this.updateTimer.Enabled = true;
-			this.updateTimer.Interval = 250;
-			this.updateTimer.Tick += new System.EventHandler(this.UpdateTick);
-			// 
-			// tableLayoutPanel1
-			// 
-			this.tableLayoutPanel1.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-			this.tableLayoutPanel1.ColumnCount = 1;
-			this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
-			this.tableLayoutPanel1.Controls.Add(this.ServerDataGrid, 0, 0);
-			this.tableLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
-			this.tableLayoutPanel1.GrowStyle = System.Windows.Forms.TableLayoutPanelGrowStyle.FixedSize;
-			this.tableLayoutPanel1.Location = new System.Drawing.Point(0, 0);
-			this.tableLayoutPanel1.Margin = new System.Windows.Forms.Padding(0);
-			this.tableLayoutPanel1.Name = "tableLayoutPanel1";
-			this.tableLayoutPanel1.RowCount = 1;
-			this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle());
-			this.tableLayoutPanel1.Size = new System.Drawing.Size(960, 720);
-			this.tableLayoutPanel1.TabIndex = 1;
 			// 
 			// ServerStatForm
 			// 
@@ -332,9 +361,9 @@
 			this.Name = "ServerStatForm";
 			this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
 			this.Text = "ServerStat";
-			this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.ServerStatForm_FormClosed);
-			this.ResizeEnd += new System.EventHandler(this.ServerStatForm_ResizeEnd);
-			this.Move += new System.EventHandler(this.ServerStatForm_Move);
+			this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.Form_FormClosed);
+			this.ResizeEnd += new System.EventHandler(this.Form_ResizeEnd);
+			this.Move += new System.EventHandler(this.Form_Move);
 			((System.ComponentModel.ISupportInitialize)(this.ServerDataGrid)).EndInit();
 			this.tableLayoutPanel1.ResumeLayout(false);
 			this.ResumeLayout(false);
@@ -345,24 +374,26 @@
         private System.Windows.Forms.Timer updateTimer;
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
         private DoubleBufferListView ServerDataGrid;
-        private System.Windows.Forms.DataGridViewTextBoxColumn ID;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Group;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Server;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Enable;
-        private System.Windows.Forms.DataGridViewTextBoxColumn TotalConnect;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Connecting;
-        private System.Windows.Forms.DataGridViewTextBoxColumn AvgLatency;
-        private System.Windows.Forms.DataGridViewTextBoxColumn AvgDownSpeed;
-        private System.Windows.Forms.DataGridViewTextBoxColumn MaxDownSpeed;
-        private System.Windows.Forms.DataGridViewTextBoxColumn AvgUpSpeed;
-        private System.Windows.Forms.DataGridViewTextBoxColumn MaxUpSpeed;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Download;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Upload;
-        private System.Windows.Forms.DataGridViewTextBoxColumn DownloadRaw;
-        private System.Windows.Forms.DataGridViewTextBoxColumn ErrorPercent;
-        private System.Windows.Forms.DataGridViewTextBoxColumn ConnectError;
-        private System.Windows.Forms.DataGridViewTextBoxColumn ConnectTimeout;
-        private System.Windows.Forms.DataGridViewTextBoxColumn ConnectEmpty;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Continuous;
-    }
+		private System.Windows.Forms.DataGridViewTextBoxColumn ID;
+		private System.Windows.Forms.DataGridViewTextBoxColumn Group;
+		private System.Windows.Forms.DataGridViewTextBoxColumn Server;
+		private System.Windows.Forms.DataGridViewTextBoxColumn ServerAddr;
+		private System.Windows.Forms.DataGridViewTextBoxColumn Enable;
+		private System.Windows.Forms.DataGridViewTextBoxColumn TotalConnect;
+		private System.Windows.Forms.DataGridViewTextBoxColumn Connecting;
+		private System.Windows.Forms.DataGridViewTextBoxColumn Ping;
+		private System.Windows.Forms.DataGridViewTextBoxColumn AvgLatency;
+		private System.Windows.Forms.DataGridViewTextBoxColumn AvgDownSpeed;
+		private System.Windows.Forms.DataGridViewTextBoxColumn MaxDownSpeed;
+		private System.Windows.Forms.DataGridViewTextBoxColumn AvgUpSpeed;
+		private System.Windows.Forms.DataGridViewTextBoxColumn MaxUpSpeed;
+		private System.Windows.Forms.DataGridViewTextBoxColumn Download;
+		private System.Windows.Forms.DataGridViewTextBoxColumn Upload;
+		private System.Windows.Forms.DataGridViewTextBoxColumn DownloadRaw;
+		private System.Windows.Forms.DataGridViewTextBoxColumn ErrorPercent;
+		private System.Windows.Forms.DataGridViewTextBoxColumn ConnectError;
+		private System.Windows.Forms.DataGridViewTextBoxColumn ConnectTimeout;
+		private System.Windows.Forms.DataGridViewTextBoxColumn ConnectEmpty;
+		private System.Windows.Forms.DataGridViewTextBoxColumn Continuous;
+	}
 }

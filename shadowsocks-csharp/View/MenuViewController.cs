@@ -10,6 +10,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
+using Shadowsocks.Controller.ServerStat;
 using Shadowsocks.View.ServerStat;
 using ZXing;
 using ZXing.Common;
@@ -35,6 +36,7 @@ namespace Shadowsocks.View
     public class MenuViewController
     {
         public INotifyIconController NotifyIconController;
+        private ServerDiagnostic _serverDiagnostic;
 
         // yes this is just a menu view controller
         // when config form is closed, it moves away from RAM
@@ -85,9 +87,10 @@ namespace Shadowsocks.View
 
 
 
-        public MenuViewController(ShadowsocksController controller)
+        public MenuViewController(ShadowsocksController controller, ServerDiagnostic serverDiagnostic)
         {
             this.controller = controller;
+            this._serverDiagnostic = serverDiagnostic;
 
             controller.ToggleModeChanged += controller_ToggleModeChanged;
             controller.ToggleRuleModeChanged += controller_ToggleRuleModeChanged;
@@ -733,7 +736,7 @@ namespace Shadowsocks.View
             }
             else
             {
-                _serverStatForm = new ServerStatForm(controller);
+                _serverStatForm = new ServerStatForm(controller, _serverDiagnostic);
                 _serverStatForm.Show();
                 _serverStatForm.Activate();
                 _serverStatForm.BringToFront();

@@ -1,7 +1,5 @@
 using System;
-using System.Collections.Generic;
 using System.Text;
-using System.Text.RegularExpressions;
 using Shadowsocks.Controller;
 using Shadowsocks.Model;
 
@@ -132,6 +130,32 @@ namespace Shadowsocks.Core.Model.Server
 					$"{remarks} ({host}:{server_port})";
 			}
 		}
+
+
+		public string Addr(bool mask = false)
+		{
+			var host = mask ? Util.ServerName.HideServerAddr(server) : server;
+			return $"{host}:{server_port}";
+		}
+
+
+		public string SimpleName(bool mask = false)
+		{
+			if (string.IsNullOrEmpty(server))
+				return I18N.GetString("New server");
+
+			var host = mask ? Util.ServerName.HideServerAddr(server) : server;
+
+			if (!string.IsNullOrEmpty(remarks_base64)) return remarks;
+
+			var containColon = server.IndexOf(':') >= 0;
+			return containColon ?
+				$"[{host}]:{server_port}" :
+				$"{host}:{server_port}";
+
+		}
+
+
 
 
 		public Server Clone()

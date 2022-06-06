@@ -8,6 +8,7 @@ using System.Net;
 using System.Threading;
 using System.Windows.Forms;
 using Microsoft.Win32;
+using Shadowsocks.Controller.ServerStat;
 using Shadowsocks.Model;
 #if !_CONSOLE
 using Shadowsocks.Core;
@@ -20,6 +21,7 @@ namespace Shadowsocks
     static class Program
     {
         static ShadowsocksController _controller;
+        static ServerDiagnostic _serverDiagnostic;
 #if !_CONSOLE
         static MenuViewController _menuController;
 #endif
@@ -92,8 +94,10 @@ namespace Shadowsocks
                     ServicePointManager.SecurityProtocol = (SecurityProtocolType)3072;
 #endif
 #if !_CONSOLE
+                _serverDiagnostic = new ServerDiagnostic();
+
                 // MenuController
-                _menuController = new MenuViewController(_controller);
+                _menuController = new MenuViewController(_controller, _serverDiagnostic);
 
                 // INotifyIconController
                 INotifyIconController notifyIconController = new NotifyIconController(ServiceManager.EventBus, _controller, _menuController);

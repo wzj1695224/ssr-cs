@@ -145,6 +145,7 @@
     <Compile Include="Controller\ModelManager.cs" />
     <Compile Include="Controller\NotifyIconController.cs" />
     <Compile Include="Controller\ProxyAuth.cs" />
+    <Compile Include="Controller\ServerStat\ServerDiagnostic.cs" />
     <Compile Include="Core\EventBus.cs" />
     <Compile Include="Core\Model\Server\Server.cs" />
     <Compile Include="Core\Model\Server\ServerFactory.cs" />
@@ -171,7 +172,9 @@
     <Compile Include="Core\ServiceManager.cs" />
     <Compile Include="Framework\Binding\Extensions.cs" />
     <Compile Include="Framework\Binding\LiveData.cs" />
+    <Compile Include="Framework\Collections\CircularBuffer.cs" />
     <Compile Include="Framework\Extension\ObjectExtensions.cs" />
+    <Compile Include="Framework\Net\Diagnostic.cs" />
     <Compile Include="Framework\Net\Extension.cs" />
     <Compile Include="Framework\Net\NetTool.cs" />
     <Compile Include="Framework\Util\ByteUtil.cs" />

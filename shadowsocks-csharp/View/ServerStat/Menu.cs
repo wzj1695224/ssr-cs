@@ -38,6 +38,10 @@ namespace Shadowsocks.View.ServerStat
 					CreateMenuItem("Copy all enable links",          copyEnableLinksItem_Click),
 					CreateMenuItem("Copy all links",                 copyLinksItem_Click),
 				}),
+				CreateMenuGroup("Diagnostic", new[]
+				{
+					CreateMenuItem("Ping all server",                PingAllServer),
+				}),
 				CreateMenuGroup("&Window", new[]
 				{
 					CreateMenuItem("Auto &size",                     AutoSizeServerDataTable),
@@ -181,6 +185,18 @@ namespace Shadowsocks.View.ServerStat
 				Clipboard.SetText(link);
 			}
 			catch { }
+		}
+
+
+		private void PingAllServer(object sender, EventArgs e)
+		{
+			var config = controller.GetCurrentConfiguration();
+			var servers = config.configs;
+			foreach (var server in servers)
+			{
+				var host = server.server;
+				_serverDiagnostic.PingAsync(host, false);
+			}
 		}
 
 	}
