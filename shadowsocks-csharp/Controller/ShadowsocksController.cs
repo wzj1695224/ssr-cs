@@ -1,14 +1,12 @@
-﻿using System.IO;
+﻿using Shadowsocks.Core;
+using Shadowsocks.Core.Model.Server;
 using Shadowsocks.Model;
 using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Threading;
+using System.IO;
 using System.Net.Sockets;
-using System.Net;
-using Shadowsocks.Core;
-using Shadowsocks.Core.Model;
-using Shadowsocks.Core.Model.Server;
+using System.Threading;
+
 
 namespace Shadowsocks.Controller
 {
@@ -272,31 +270,25 @@ namespace Shadowsocks.Controller
             SaveConfig(_config);
         }
 
+
+
+
         public void Stop()
         {
-            if (stopped)
-            {
-                return;
-            }
+            if (stopped) return;
             stopped = true;
 
             if (_port_map_listener != null)
             {
-                foreach (Listener l in _port_map_listener)
-                {
-                    l.Stop();
-                }
+                foreach (var l in _port_map_listener)
+	                l.Stop();
                 _port_map_listener = null;
             }
-            if (_listener != null)
-            {
-                _listener.Stop();
-            }
+
+            _listener?.Stop();
 #if !_CONSOLE
-            if (polipoRunner != null)
-            {
-                polipoRunner.Stop();
-            }
+	        polipoRunner?.Stop();
+
             if (_config.sysProxyMode != (int)ProxyMode.NoModify && _config.sysProxyMode != (int)ProxyMode.Direct)
             {
                 SystemProxy.Update(_config, true);
@@ -304,6 +296,9 @@ namespace Shadowsocks.Controller
 #endif
             ServerTransferTotal.Save(_transfer);
         }
+
+
+
 
         public void ClearTransferTotal(string server_addr)
         {
@@ -354,30 +349,32 @@ namespace Shadowsocks.Controller
             }
         }
 
+
+
+
         protected void Reload()
         {
             if (_port_map_listener != null)
             {
-                foreach (Listener l in _port_map_listener)
+                foreach (var l in _port_map_listener)
                 {
                     l.Stop();
                 }
                 _port_map_listener = null;
             }
+
             // some logic in configuration updated the config when saving, we need to read it again
             _config = MergeGetConfiguration(_config);
             _config.FlushPortMapCache();
             ReloadIPRange();
 
-            HostMap hostMap = new HostMap();
+            var hostMap = new HostMap();
             hostMap.LoadHostFile();
             HostMap.Instance().Clear(hostMap);
 
 #if !_CONSOLE
             if (polipoRunner == null)
-            {
-                polipoRunner = new HttpProxyRunner();
-            }
+	            polipoRunner = new HttpProxyRunner();
 #endif
             if (_pacServer == null)
             {
@@ -396,15 +393,15 @@ namespace Shadowsocks.Controller
             // or bind will fail when switching bind address from 0.0.0.0 to 127.0.0.1
             // though UseShellExecute is set to true now
             // http://stackoverflow.com/questions/10235093/socket-doesnt-close-after-application-exits-if-a-launched-process-is-open
-            bool _firstRun = firstRun;
-            for (int i = 1; i <= 5; ++i)
+            var _firstRun = firstRun;
+            for (var i = 1; i <= 5; ++i)
             {
                 _firstRun = false;
                 try
                 {
                     if (_listener != null && !_listener.isConfigChange(_config))
                     {
-                        Local local = new Local(_config, _transfer, _rangeSet);
+                        var local = new Local(_config, _transfer, _rangeSet);
                         _listener.GetServices()[0] = local;
 #if !_CONSOLE
                         if (polipoRunner.HasExited())
@@ -429,14 +426,16 @@ namespace Shadowsocks.Controller
                         polipoRunner.Start(_config);
 #endif
 
-                        Local local = new Local(_config, _transfer, _rangeSet);
-                        List<Listener.Service> services = new List<Listener.Service>();
-                        services.Add(local);
-                        services.Add(_pacServer);
-                        services.Add(new APIServer(this, _config));
+                        var services = new List<Listener.IService>
+                        {
+                            new Local(_config, _transfer, _rangeSet),
+	                        _pacServer,
+	                        new APIServer(this, _config),
 #if !_CONSOLE
-                        services.Add(new HttpPortForwarder(polipoRunner.RunningPort, _config));
+							new HttpPortForwarder(polipoRunner.RunningPort, _config)
 #endif
+                        };
+
                         _listener = new Listener(services);
                         _listener.Start(_config, 0);
                     }
@@ -448,7 +447,7 @@ namespace Shadowsocks.Controller
                     // i.e. An attempt was made to access a socket in a way forbidden by its access permissions => Port already in use
                     if (e is SocketException)
                     {
-                        SocketException se = (SocketException)e;
+                        var se = (SocketException)e;
                         if (se.SocketErrorCode == SocketError.AccessDenied)
                         {
                             e = new Exception(I18N.GetString("Port already in use") + string.Format(" {0}", _config.localPort), e);
@@ -473,14 +472,14 @@ namespace Shadowsocks.Controller
             }
 
             _port_map_listener = new List<Listener>();
-            foreach (KeyValuePair<int, PortMapConfigCache> pair in _config.GetPortMapCache())
+            foreach (var pair in _config.GetPortMapCache())
             {
                 try
                 {
-                    Local local = new Local(_config, _transfer, _rangeSet);
-                    List<Listener.Service> services = new List<Listener.Service>();
+                    var local = new Local(_config, _transfer, _rangeSet);
+                    var services = new List<Listener.IService>();
                     services.Add(local);
-                    Listener listener = new Listener(services);
+                    var listener = new Listener(services);
                     listener.Start(_config, pair.Key);
                     _port_map_listener.Add(listener);
                 }
@@ -490,7 +489,7 @@ namespace Shadowsocks.Controller
                     // i.e. An attempt was made to access a socket in a way forbidden by its access permissions => Port already in use
                     if (e is SocketException)
                     {
-                        SocketException se = (SocketException)e;
+                        var se = (SocketException)e;
                         if (se.SocketErrorCode == SocketError.AccessDenied)
                         {
                             e = new Exception(I18N.GetString("Port already in use") + string.Format(" {0}", pair.Key), e);
@@ -501,11 +500,13 @@ namespace Shadowsocks.Controller
                 }
             }
 
-            ConfigChanged?.Invoke(this, new EventArgs());
+            ConfigChanged?.Invoke(this, EventArgs.Empty);
 
             UpdateSystemProxy();
             Util.Utils.ReleaseMemory();
         }
+
+
 
 
         protected void SaveConfig(Configuration newConfig)

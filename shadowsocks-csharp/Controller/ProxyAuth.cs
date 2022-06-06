@@ -1,19 +1,16 @@
-﻿using System;
+﻿using Shadowsocks.Core.Model.Server;
+using Shadowsocks.Framework.Net;
+using Shadowsocks.Model;
+using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Net;
 using System.Net.Sockets;
-using Shadowsocks.Encryption;
-using Shadowsocks.Obfs;
-using Shadowsocks.Model;
-using System.Timers;
-using System.Threading;
-using Shadowsocks.Core.Model;
-using Shadowsocks.Core.Model.Server;
+using System.Text;
+
 
 namespace Shadowsocks.Controller
 {
-    public class ProtocolException : Exception
+	public class ProtocolException : Exception
     {
         public ProtocolException(string info)
             : base(info)
@@ -21,6 +18,7 @@ namespace Shadowsocks.Controller
 
         }
     }
+
 
     class ProxyAuthHandler
     {
@@ -41,11 +39,12 @@ namespace Shadowsocks.Controller
         public byte command;
         protected byte[] _remoteHeaderSendBuffer;
 
-        protected HttpPraser httpProxyState;
+        protected HttpParser httpProxyState;
+
 
         public ProxyAuthHandler(Configuration config, ServerTransferTotal transfer, IPRangeSet IPRange, byte[] firstPacket, int length, Socket socket)
         {
-            int local_port = ((IPEndPoint)socket.LocalEndPoint).Port;
+            var localPort = ((IPEndPoint)socket.LocalEndPoint).Port;
 
             _config = config;
             _transfer = transfer;
@@ -55,41 +54,42 @@ namespace Shadowsocks.Controller
             _connection = socket;
             socket.NoDelay = true;
 
-            if (_config.GetPortMapCache().ContainsKey(local_port) && _config.GetPortMapCache()[local_port].type == PortMapType.Forward)
-            {
-                Connect();
-            }
+            if (_config.GetPortMapCache().ContainsKey(localPort) && _config.GetPortMapCache()[localPort].type == PortMapType.Forward)
+	            Connect();
             else
-            {
-                HandshakeReceive();
-            }
+	            HandshakeReceive();
         }
+
 
         private void CloseSocket(ref Socket sock)
         {
             lock (this)
             {
-                if (sock != null)
-                {
-                    Socket s = sock;
-                    sock = null;
-                    try
-                    {
-                        s.Shutdown(SocketShutdown.Both);
-                    }
-                    catch
-                    {
-                    }
-                    try
-                    {
-                        s.Close();
-                    }
-                    catch
-                    {
-                    }
-                }
+	            if (sock == null) return;
+
+	            var s = sock;
+	            sock = null;
+
+	            try
+	            {
+		            s.Shutdown(SocketShutdown.Both);
+	            }
+	            catch
+	            {
+		            // ignored
+	            }
+
+	            try
+	            {
+		            s.Close();
+	            }
+	            catch
+	            {
+		            // ignored
+	            }
             }
         }
+
 
         private void Close()
         {
@@ -99,22 +99,21 @@ namespace Shadowsocks.Controller
             _config = null;
         }
 
+
         bool AuthConnection(Socket connection, string authUser, string authPass)
         {
             if ((_config.authUser ?? "").Length == 0)
-            {
-                return true;
-            }
+	            return true;
+
             if (_config.authUser == authUser && (_config.authPass ?? "") == authPass)
-            {
-                return true;
-            }
-            if (Util.Utils.isMatchSubNet(((IPEndPoint)_connection.RemoteEndPoint).Address, "127.0.0.0/8"))
-            {
-                return true;
-            }
+	            return true;
+
+	        if (NetTool.IsMatchSubnet(((IPEndPoint)_connection.RemoteEndPoint).Address, "127.0.0.0/8"))
+	            return true;
+
             return false;
         }
+
 
         private void HandshakeReceive()
         {
@@ -124,7 +123,7 @@ namespace Shadowsocks.Controller
 
                 if (bytesRead > 1)
                 {
-                    if ((!string.IsNullOrEmpty(_config.authUser) || Util.Utils.isMatchSubNet(((IPEndPoint)_connection.RemoteEndPoint).Address, "127.0.0.0/8"))
+                    if ((!string.IsNullOrEmpty(_config.authUser) || NetTool.IsMatchSubnet(((IPEndPoint)_connection.RemoteEndPoint).Address, "127.0.0.0/8"))
                         && _firstPacket[0] == 4 && _firstPacketLength >= 9)
                     {
                         RspSocks4aHandshakeReceive();
@@ -149,6 +148,7 @@ namespace Shadowsocks.Controller
                 Close();
             }
         }
+
 
         private void RspSocks4aHandshakeReceive()
         {
@@ -194,6 +194,7 @@ namespace Shadowsocks.Controller
             Connect();
         }
 
+
         private void RspSocks5HandshakeReceive()
         {
             byte[] response = { 5, 0 };
@@ -234,7 +235,7 @@ namespace Shadowsocks.Controller
                 HandshakeAuthReceiveCallback();
             }
             else if (no_auth && (string.IsNullOrEmpty(_config.authUser)
-                || Util.Utils.isMatchSubNet(((IPEndPoint)_connection.RemoteEndPoint).Address, "127.0.0.0/8")))
+                || NetTool.IsMatchSubnet(((IPEndPoint)_connection.RemoteEndPoint).Address, "127.0.0.0/8")))
             {
                 _connection.Send(response);
                 HandshakeReceive2Callback();
@@ -245,6 +246,7 @@ namespace Shadowsocks.Controller
                 Close();
             }
         }
+
 
         private void HandshakeAuthReceiveCallback()
         {
@@ -277,6 +279,7 @@ namespace Shadowsocks.Controller
                 Close();
             }
         }
+
 
         private void HandshakeReceive2Callback()
         {
@@ -319,6 +322,7 @@ namespace Shadowsocks.Controller
             }
         }
 
+
         private void HandshakeReceive3Callback(int recv_size)
         {
             try
@@ -353,6 +357,7 @@ namespace Shadowsocks.Controller
                 Close();
             }
         }
+
 
         private void RspSocks5UDPHeader(int bytesRead)
         {
@@ -442,9 +447,9 @@ namespace Shadowsocks.Controller
             command = 1; // Set TCP connect command
             if (httpProxyState == null)
             {
-                httpProxyState = new HttpPraser();
+                httpProxyState = new HttpParser();
             }
-            if (Util.Utils.isMatchSubNet(((IPEndPoint)_connection.RemoteEndPoint).Address, "127.0.0.0/8"))
+            if (NetTool.IsMatchSubnet(((IPEndPoint)_connection.RemoteEndPoint).Address, "127.0.0.0/8"))
             {
                 httpProxyState.httpAuthUser = "";
                 httpProxyState.httpAuthPass = "";

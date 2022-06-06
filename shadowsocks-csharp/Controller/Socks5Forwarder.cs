@@ -8,12 +8,13 @@ using System.Timers;
 using OpenDNS;
 using Shadowsocks.Core.Model;
 using Shadowsocks.Core.Model.Server;
+using Shadowsocks.Framework.Net;
 using Shadowsocks.Model;
 using Shadowsocks.Util;
 
 namespace Shadowsocks.Controller
 {
-    class Socks5Forwarder : Listener.Service
+    class Socks5Forwarder : Listener.IService
     {
         private Configuration _config;
         private IPRangeSet _IPRange;
@@ -132,7 +133,7 @@ namespace Shadowsocks.Controller
                                         Utils.DnsBuffer.Set(host, new IPAddress(ipAddress.GetAddressBytes()));
                                         if (host.IndexOf('.') >= 0)
                                         {
-                                            if (Util.Utils.isLAN(ipAddress)) // assume that it is polution if return LAN address
+                                            if (ipAddress.IsLANAddr()) // assume that it is polution if return LAN address
                                             {
                                                 return CONNECT_REMOTEPROXY;
                                             }
@@ -180,7 +181,7 @@ namespace Shadowsocks.Controller
                     }
                     else
                     {
-                        if (Util.Utils.isLAN(ipAddress))
+                        if ( ipAddress.IsLANAddr() )
                         {
                             return CONNECT_DIRECT;
                         }

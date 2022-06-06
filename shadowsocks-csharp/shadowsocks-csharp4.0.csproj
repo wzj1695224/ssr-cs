@@ -172,6 +172,8 @@
     <Compile Include="Framework\Binding\Extensions.cs" />
     <Compile Include="Framework\Binding\LiveData.cs" />
     <Compile Include="Framework\Extension\ObjectExtensions.cs" />
+    <Compile Include="Framework\Net\Extension.cs" />
+    <Compile Include="Framework\Net\NetTool.cs" />
     <Compile Include="Framework\Util\ByteUtil.cs" />
     <Compile Include="Framework\Windows\DPI.cs" />
     <Compile Include="Framework\Windows\Forms\Menu\MenuFactory.cs" />

@@ -307,6 +307,9 @@ namespace Shadowsocks.Model
             }
         }
 
+
+
+
         public void FlushPortMapCache()
         {
             portMapCache = new Dictionary<int, PortMapConfigCache>();
@@ -365,6 +368,9 @@ namespace Shadowsocks.Model
 
             uricache.Clear();
         }
+
+
+
 
         public Dictionary<int, PortMapConfigCache> GetPortMapCache()
         {

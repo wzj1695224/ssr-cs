@@ -1,4 +1,8 @@
-﻿using System;
+﻿using OpenDNS;
+using Shadowsocks.Controller;
+using Shadowsocks.Framework.Windows;
+using Shadowsocks.Model;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
@@ -9,39 +13,22 @@ using System.Net.Sockets;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
-using System.Text;
 using System.Windows.Forms;
-using OpenDNS;
-using Shadowsocks.Controller;
-using Shadowsocks.Encryption;
-using Shadowsocks.Framework.Windows;
-using Shadowsocks.Model;
+
 
 namespace Shadowsocks.Util
 {
-    public class Utils
+	public class Utils
     {
         private delegate IPHostEntry GetHostEntryHandler(string ip);
 
         private static LRUCache<string, IPAddress> dnsBuffer = new LRUCache<string, IPAddress>();
 
-        public static LRUCache<string, IPAddress> DnsBuffer
-        {
-            get
-            {
-                return dnsBuffer;
-            }
-        }
-
-        public static LRUCache<string, IPAddress> LocalDnsBuffer
-        {
-            get
-            {
-                return dnsBuffer;
-            }
-        }
+        public static LRUCache<string, IPAddress> DnsBuffer => dnsBuffer;
+        public static LRUCache<string, IPAddress> LocalDnsBuffer => dnsBuffer;
 
         static Process current_process = Process.GetCurrentProcess();
+
 
         public static void ReleaseMemory()
         {
@@ -69,6 +56,7 @@ namespace Shadowsocks.Util
             }
 #endif
         }
+
 
         public static string UnGzip(byte[] buf)
         {
@@ -151,131 +139,6 @@ namespace Shadowsocks.Util
             return -1;
         }
 
-        public static bool isMatchSubNet(IPAddress ip, IPAddress net, int netmask)
-        {
-            byte[] addr = ip.GetAddressBytes();
-            byte[] net_addr = net.GetAddressBytes();
-            int i = 8, index = 0;
-            for (; i < netmask; i += 8, index += 1)
-            {
-                if (addr[index] != net_addr[index])
-                    return false;
-            }
-            if ((addr[index] >> (i - netmask)) != (net_addr[index] >> (i - netmask)))
-                return false;
-            return true;
-        }
-
-        public static bool isMatchSubNet(IPAddress ip, string netmask)
-        {
-            string[] mask = netmask.Split('/');
-            IPAddress netmask_ip = IPAddress.Parse(mask[0]);
-            if (ip.AddressFamily == netmask_ip.AddressFamily)
-            {
-                try
-                {
-                    return isMatchSubNet(ip, netmask_ip, Convert.ToInt16(mask[1]));
-                }
-                catch
-                {
-                    return false;
-                }
-            }
-            else
-            {
-                return false;
-            }
-        }
-
-        public static bool isLocal(IPAddress ip)
-        {
-            byte[] addr = ip.GetAddressBytes();
-            if (addr.Length == 4)
-            {
-                string[] netmasks = new string[]
-                {
-                    "127.0.0.0/8",
-                    "169.254.0.0/16",
-                };
-                foreach (string netmask in netmasks)
-                {
-                    if (isMatchSubNet(ip, netmask))
-                        return true;
-                }
-                return false;
-            }
-            else if (addr.Length == 16)
-            {
-                string[] netmasks = new string[]
-                {
-                    "::1/128",
-                };
-                foreach (string netmask in netmasks)
-                {
-                    if (isMatchSubNet(ip, netmask))
-                        return true;
-                }
-                return false;
-            }
-            return true;
-        }
-
-        public static bool isLocal(Socket socket)
-        {
-            return isLocal(((IPEndPoint)socket.RemoteEndPoint).Address);
-        }
-
-        public static bool isLAN(IPAddress ip)
-        {
-            byte[] addr = ip.GetAddressBytes();
-            if (addr.Length == 4)
-            {
-                if (ip.Equals(new IPAddress(0)))
-                    return false;
-                string[] netmasks = new string[]
-                {
-                    "0.0.0.0/8",
-                    "10.0.0.0/8",
-                    //"100.64.0.0/10", //部分地区运营商貌似在使用这个，这个可能不安全
-                    "127.0.0.0/8",
-                    "169.254.0.0/16",
-                    "172.16.0.0/12",
-                    //"192.0.0.0/24",
-                    //"192.0.2.0/24",
-                    "192.168.0.0/16",
-                    //"198.18.0.0/15",
-                    //"198.51.100.0/24",
-                    //"203.0.113.0/24",
-                };
-                foreach (string netmask in netmasks)
-                {
-                    if (isMatchSubNet(ip, netmask))
-                        return true;
-                }
-                return false;
-            }
-            else if (addr.Length == 16)
-            {
-                string[] netmasks = new string[]
-                {
-                    "::1/128",
-                    "fc00::/7",
-                    "fe80::/10",
-                };
-                foreach (string netmask in netmasks)
-                {
-                    if (isMatchSubNet(ip, netmask))
-                        return true;
-                }
-                return false;
-            }
-            return true;
-        }
-
-        public static bool isLAN(Socket socket)
-        {
-            return isLAN(((IPEndPoint)socket.RemoteEndPoint).Address);
-        }
 
         public static String GetTimestamp(DateTime value)
         {
@@ -454,7 +317,7 @@ namespace Shadowsocks.Util
 
         public static string GetExecutablePath()
         {
-            return System.Reflection.Assembly.GetExecutingAssembly().Location;
+            return Assembly.GetExecutingAssembly().Location;
         }
 
         public static int RunAsAdmin(string Arguments)

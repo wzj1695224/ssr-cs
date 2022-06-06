@@ -1,14 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Shadowsocks.Framework.Net;
+using Shadowsocks.Model;
+using System;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading;
-using Shadowsocks.Model;
+
 
 namespace Shadowsocks.Controller
 {
-    class HttpPortForwarder : Listener.Service
+	class HttpPortForwarder : Listener.IService
     {
         int _targetPort;
         Configuration _config;
@@ -34,7 +34,7 @@ namespace Shadowsocks.Controller
             private Socket _remote;
             private bool _closed = false;
             private Configuration _config;
-            HttpPraser httpProxyState;
+            HttpParser httpProxyState;
             public const int RecvSize = 4096;
             // remote receive buffer
             private byte[] remoteRecvBuffer = new byte[RecvSize];
@@ -48,7 +48,7 @@ namespace Shadowsocks.Controller
                 _local = socket;
                 _targetPort = targetPort;
                 _config = config;
-                if ((_config.authUser ?? "").Length == 0 || Util.Utils.isMatchSubNet(((IPEndPoint)this._local.RemoteEndPoint).Address, "127.0.0.0/8"))
+                if ((_config.authUser ?? "").Length == 0 || NetTool.IsMatchSubnet(((IPEndPoint)this._local.RemoteEndPoint).Address, "127.0.0.0/8"))
                 {
                     Connect();
                 }
@@ -61,7 +61,7 @@ namespace Shadowsocks.Controller
             {
                 if (httpProxyState == null)
                 {
-                    httpProxyState = new HttpPraser(true);
+                    httpProxyState = new HttpParser(true);
                 }
                 httpProxyState.httpAuthUser = _config.authUser;
                 httpProxyState.httpAuthPass = _config.authPass;

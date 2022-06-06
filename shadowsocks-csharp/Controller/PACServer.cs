@@ -1,18 +1,17 @@
-﻿using Shadowsocks.Model;
+﻿using Shadowsocks.Framework.Net;
+using Shadowsocks.Model;
 using Shadowsocks.Properties;
 using Shadowsocks.Util;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using System.IO.Compression;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
 
+
 namespace Shadowsocks.Controller
 {
-    class PACServer : Listener.Service
+	internal class PACServer : Listener.IService
     {
         public static string PAC_FILE = "pac.txt";
 
@@ -27,29 +26,37 @@ namespace Shadowsocks.Controller
         public event EventHandler PACFileChanged;
         public event EventHandler UserRuleFileChanged;
 
+
         public PACServer()
         {
             this.WatchPacFile();
             this.WatchUserRuleFile();
         }
 
+
         public void UpdateConfiguration(Configuration config)
         {
             this._config = config;
         }
 
+
+
+
         public bool Handle(byte[] firstPacket, int length, Socket socket)
         {
             try
             {
-                string request = Encoding.UTF8.GetString(firstPacket, 0, length);
-                string[] lines = request.Split(new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+                var request = Encoding.UTF8.GetString(firstPacket, 0, length);
+                var lines = request.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+                
+                // context var
                 bool hostMatch = false, pathMatch = false;
-                int socksType = 0;
+                var socksType = 0;
                 string proxy = null;
-                foreach (string line in lines)
+
+                foreach (var line in lines)
                 {
-                    string[] kv = line.Split(new char[]{':'}, 2);
+                    var kv = line.Split(new[]{':'}, 2);
                     if (kv.Length == 2)
                     {
                         if (kv[0] == "Host")
@@ -70,23 +77,25 @@ namespace Shadowsocks.Controller
                     }
                     else if (kv.Length == 1)
                     {
-                        if (!Util.Utils.isLocal(socket) || line.IndexOf("auth=" + _config.localAuthPassword) > 0)
+                        if (!socket.IsLocal() || line.IndexOf("auth=" + _config.localAuthPassword) > 0)
                         {
-                            if (line.IndexOf(" /pac?") > 0 && line.IndexOf("GET") == 0)
+	                        var isPACRequest = line.IndexOf(" /pac?", StringComparison.Ordinal) > 0 && line.StartsWith("GET");
+	                        if ( isPACRequest )
                             {
-                                string url = line.Substring(line.IndexOf(" ") + 1);
+                                var url = line.Substring(line.IndexOf(" ") + 1);
                                 url = url.Substring(0, url.IndexOf(" "));
                                 pathMatch = true;
-                                int port_pos = url.IndexOf("port=");
+
+                                var port_pos = url.IndexOf("port=", StringComparison.Ordinal);
                                 if (port_pos > 0)
                                 {
-                                    string port = url.Substring(port_pos + 5);
+                                    var port = url.Substring(port_pos + 5);
                                     if (port.IndexOf("&") >= 0)
                                     {
                                         port = port.Substring(0, port.IndexOf("&"));
                                     }
 
-                                    int ip_pos = url.IndexOf("ip=");
+                                    var ip_pos = url.IndexOf("ip=");
                                     if (ip_pos > 0)
                                     {
                                         proxy = url.Substring(ip_pos + 3);
@@ -114,6 +123,7 @@ namespace Shadowsocks.Controller
                         }
                     }
                 }
+                
                 if (hostMatch && pathMatch)
                 {
                     SendResponse(firstPacket, length, socket, socksType, proxy);
@@ -126,6 +136,74 @@ namespace Shadowsocks.Controller
                 return false;
             }
         }
+
+
+
+
+        private void SendResponse(byte[] firstPacket, int length, Socket socket, int socksType, string setProxy)
+        {
+            try
+            {
+                var pac = CreatePACScript(firstPacket, length, socket, socksType, setProxy);
+                var response = PACFactory.CreatePACResponse(pac);
+                socket.BeginSend(response, 0, response.Length, 0, CloseAfterSent, socket);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                socket.Shutdown(SocketShutdown.Both);
+                socket.Close();
+            }
+        }
+
+
+        private string CreatePACScript(byte[] firstPacket, int length, Socket socket, int socksType, string setProxy)
+        {
+	        var pac = PACFactory.GetPACScript();
+
+	        var localEndPoint = (IPEndPoint)socket.LocalEndPoint;
+
+	        var proxy =
+		        setProxy == null ? GetPACAddress(firstPacket, length, localEndPoint, socksType) :
+		        socksType == 5 ? "SOCKS5 " + setProxy :
+		        socksType == 4 ? "SOCKS " + setProxy :
+		        "PROXY " + setProxy;
+
+            // __DIRECT__
+	        if (_config.pacDirectGoProxy && _config.proxyEnable)
+	        {
+		        if (_config.proxyType == 0)
+			        pac = pac.Replace("__DIRECT__", "SOCKS5 " + _config.proxyHost + ":" + _config.proxyPort + ";DIRECT;");
+		        else if (_config.proxyType == 1)
+			        pac = pac.Replace("__DIRECT__", "PROXY " + _config.proxyHost + ":" + _config.proxyPort + ";DIRECT;");
+	        }
+	        else
+		        pac = pac.Replace("__DIRECT__", "DIRECT;");
+
+            // __PROXY__
+	        pac = pac.Replace("__PROXY__", proxy + "DIRECT;");
+
+	        return pac;
+        }
+
+
+
+
+        private static void CloseAfterSent(IAsyncResult ar)
+        {
+            var conn = (Socket)ar.AsyncState;
+            try
+            {
+                conn.Shutdown(SocketShutdown.Both);
+                conn.Close();
+            }
+            catch
+            {
+	            // ignored
+            }
+        }
+
+
 
 
         public string TouchPACFile()
@@ -154,145 +232,122 @@ namespace Shadowsocks.Controller
             }
         }
 
-        private string GetPACContent()
+
+
+
+        private void WatchPacFile()
         {
-            if (File.Exists(PAC_FILE))
+	        PACFileWatcher?.Dispose();
+
+            PACFileWatcher = new FileSystemWatcher(Directory.GetCurrentDirectory())
             {
-                return File.ReadAllText(PAC_FILE, Encoding.UTF8);
-            }
-            else
-            {
-                return Utils.UnGzip(Resources.proxy_pac_txt);
-            }
+	            NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.DirectoryName,
+	            EnableRaisingEvents = true,
+	            Filter = PAC_FILE
+            };
+
+            PACFileWatcher.Changed += Watcher_Changed;
+            PACFileWatcher.Created += Watcher_Changed;
+            PACFileWatcher.Deleted += Watcher_Changed;
+            PACFileWatcher.Renamed += Watcher_Changed;
         }
 
-        public void SendResponse(byte[] firstPacket, int length, Socket socket, int socksType, string setProxy)
+
+        private void WatchUserRuleFile()
         {
-            try
+	        UserRuleFileWatcher?.Dispose();
+
+            UserRuleFileWatcher = new FileSystemWatcher(Directory.GetCurrentDirectory())
             {
-                string pac = GetPACContent();
+	            NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.DirectoryName,
+	            EnableRaisingEvents = true,
+	            Filter = USER_RULE_FILE
+            };
 
-                IPEndPoint localEndPoint = (IPEndPoint)socket.LocalEndPoint;
+            UserRuleFileWatcher.Changed += UserRuleFileWatcher_Changed;
+            UserRuleFileWatcher.Created += UserRuleFileWatcher_Changed;
+            UserRuleFileWatcher.Deleted += UserRuleFileWatcher_Changed;
+            UserRuleFileWatcher.Renamed += UserRuleFileWatcher_Changed;
+        }
 
-                string proxy =
-                    setProxy == null ? GetPACAddress(firstPacket, length, localEndPoint, socksType) :
-                    socksType == 5 ? "SOCKS5 " + setProxy :
-                    socksType == 4 ? "SOCKS " + setProxy :
-                    "PROXY " + setProxy;
 
-                if (_config.pacDirectGoProxy && _config.proxyEnable)
-                {
-                    if (_config.proxyType == 0)
-                        pac = pac.Replace("__DIRECT__", "SOCKS5 " + _config.proxyHost + ":" +  _config.proxyPort.ToString() + ";DIRECT;");
-                    else if (_config.proxyType == 1)
-                        pac = pac.Replace("__DIRECT__", "PROXY " + _config.proxyHost + ":" + _config.proxyPort.ToString() + ";DIRECT;");
-                }
-                else
-                    pac = pac.Replace("__DIRECT__", "DIRECT;");
-                pac = pac.Replace("__PROXY__", proxy + "DIRECT;");
+        private void Watcher_Changed(object sender, FileSystemEventArgs e)
+        {
+	        PACFileChanged?.Invoke(this, EventArgs.Empty);
+        }
 
-                string text = String.Format(@"HTTP/1.1 200 OK
+        private void UserRuleFileWatcher_Changed(object sender, FileSystemEventArgs e)
+        {
+	        UserRuleFileChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+
+        private string GetPACAddress(byte[] requestBuf, int length, IPEndPoint localEndPoint, int socksType)
+        {
+	        // try
+         //    {
+         //        string requestString = Encoding.UTF8.GetString(requestBuf);
+         //        if (requestString.IndexOf("AppleWebKit") >= 0)
+         //        {
+         //            string address = "" + localEndPoint.Address + ":" + config.GetCurrentServer().local_port;
+         //            proxy = "SOCKS5 " + address + "; SOCKS " + address + ";";
+         //        }
+         //    }
+         //    catch (Exception e)
+         //    {
+         //        Console.WriteLine(e);
+         //    }
+         switch (socksType)
+            {
+	            case 5:
+		            return "SOCKS5 " + localEndPoint.Address + ":" + this._config.localPort + ";";
+	            case 4:
+		            return "SOCKS " + localEndPoint.Address + ":" + this._config.localPort + ";";
+	            default:
+		            return "PROXY " + localEndPoint.Address + ":" + this._config.localPort + ";";
+            }
+        }
+    }
+
+
+
+
+	internal static class PACFactory
+	{
+        private const string PACFile = "pac.txt";
+
+        private const string PACRespTemplate = 
+@"HTTP/1.1 200 OK
 Server: ShadowsocksR
 Content-Type: application/x-ns-proxy-autoconfig
 Content-Length: {0}
 Connection: Close
 
-", System.Text.Encoding.UTF8.GetBytes(pac).Length) + pac;
-                byte[] response = System.Text.Encoding.UTF8.GetBytes(text);
-                socket.BeginSend(response, 0, response.Length, 0, new AsyncCallback(SendCallback), socket);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-                socket.Shutdown(SocketShutdown.Both);
-                socket.Close();
-            }
+";
+
+
+		public static byte[] CreatePACResponse(string script)
+		{
+			var body = Encoding.UTF8.GetBytes(script);
+
+			var headerText = string.Format(PACRespTemplate, body.Length);
+			var header = Encoding.UTF8.GetBytes(headerText);
+
+            var resp = new byte[header.Length + body.Length];
+            Buffer.BlockCopy(header, 0, resp, 0, header.Length);
+            Buffer.BlockCopy(body, 0, resp, header.Length, body.Length);
+            return resp;
         }
 
-        private void SendCallback(IAsyncResult ar)
+
+
+        public static string GetPACScript()
         {
-            Socket conn = (Socket)ar.AsyncState;
-            try
-            {
-                conn.Shutdown(SocketShutdown.Both);
-                conn.Close();
-            }
-            catch
-            { }
+            if (File.Exists(PACFile))
+                return File.ReadAllText(PACFile, Encoding.UTF8);
+            return Utils.UnGzip(Resources.proxy_pac_txt);
         }
 
-        private void WatchPacFile()
-        {
-            if (PACFileWatcher != null)
-            {
-                PACFileWatcher.Dispose();
-            }
-            PACFileWatcher = new FileSystemWatcher(Directory.GetCurrentDirectory());
-            PACFileWatcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.DirectoryName;
-            PACFileWatcher.Filter = PAC_FILE;
-            PACFileWatcher.Changed += Watcher_Changed;
-            PACFileWatcher.Created += Watcher_Changed;
-            PACFileWatcher.Deleted += Watcher_Changed;
-            PACFileWatcher.Renamed += Watcher_Changed;
-            PACFileWatcher.EnableRaisingEvents = true;
-        }
-
-        private void WatchUserRuleFile()
-        {
-            if (UserRuleFileWatcher != null)
-            {
-                UserRuleFileWatcher.Dispose();
-            }
-            UserRuleFileWatcher = new FileSystemWatcher(Directory.GetCurrentDirectory());
-            UserRuleFileWatcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.DirectoryName;
-            UserRuleFileWatcher.Filter = USER_RULE_FILE;
-            UserRuleFileWatcher.Changed += UserRuleFileWatcher_Changed;
-            UserRuleFileWatcher.Created += UserRuleFileWatcher_Changed;
-            UserRuleFileWatcher.Deleted += UserRuleFileWatcher_Changed;
-            UserRuleFileWatcher.Renamed += UserRuleFileWatcher_Changed;
-            UserRuleFileWatcher.EnableRaisingEvents = true;
-        }
-
-        private void Watcher_Changed(object sender, FileSystemEventArgs e)
-        {
-            if (PACFileChanged != null)
-            {
-                PACFileChanged(this, new EventArgs());
-            }
-        }
-
-        private void UserRuleFileWatcher_Changed(object sender, FileSystemEventArgs e)
-        {
-            if (UserRuleFileChanged != null)
-            {
-                UserRuleFileChanged(this, new EventArgs());
-            }
-        }
-
-        private string GetPACAddress(byte[] requestBuf, int length, IPEndPoint localEndPoint, int socksType)
-        {
-            //try
-            //{
-            //    string requestString = Encoding.UTF8.GetString(requestBuf);
-            //    if (requestString.IndexOf("AppleWebKit") >= 0)
-            //    {
-            //        string address = "" + localEndPoint.Address + ":" + config.GetCurrentServer().local_port;
-            //        proxy = "SOCKS5 " + address + "; SOCKS " + address + ";";
-            //    }
-            //}
-            //catch (Exception e)
-            //{
-            //    Console.WriteLine(e);
-            //}
-            if (socksType == 5)
-            {
-                return "SOCKS5 " + localEndPoint.Address + ":" + this._config.localPort + ";";
-            }
-            else if (socksType == 4)
-            {
-                return "SOCKS " + localEndPoint.Address + ":" + this._config.localPort + ";";
-            }
-            return "PROXY " + localEndPoint.Address + ":" + this._config.localPort + ";";
-        }
     }
+
 }

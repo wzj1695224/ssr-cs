@@ -54,7 +54,10 @@ namespace Shadowsocks.Controller
         }
     }
 
-    class Local : Listener.Service
+
+
+
+    internal class Local : Listener.IService
     {
         private delegate void InvokeHandler();
         private Configuration _config;
@@ -68,42 +71,42 @@ namespace Shadowsocks.Controller
             _IPRange = IPRange;
         }
 
-        protected bool Accept(byte[] firstPacket, int length)
-        {
-            if (length < 2)
-            {
-                return false;
-            }
-            if (firstPacket[0] == 5 || firstPacket[0] == 4)
-            {
-                return true;
-            }
-            if (length > 8
-                && firstPacket[0] == 'C'
-                && firstPacket[1] == 'O'
-                && firstPacket[2] == 'N'
-                && firstPacket[3] == 'N'
-                && firstPacket[4] == 'E'
-                && firstPacket[5] == 'C'
-                && firstPacket[6] == 'T'
-                && firstPacket[7] == ' ')
-            {
-                return true;
-            }
-            return false;
-        }
 
         public bool Handle(byte[] firstPacket, int length, Socket socket)
         {
-            if (!_config.GetPortMapCache().ContainsKey(((IPEndPoint)socket.LocalEndPoint).Port) && !Accept(firstPacket, length))
+	        var localPort = ((IPEndPoint)socket.LocalEndPoint).Port;
+	        if (!_config.GetPortMapCache().ContainsKey(localPort) && !Accept(firstPacket, length))
             {
                 return false;
             }
+
             InvokeHandler handler = () => new ProxyAuthHandler(_config, _transfer, _IPRange, firstPacket, length, socket);
             handler.BeginInvoke(null, null);
             return true;
         }
+
+
+        protected bool Accept(byte[] firstPacket, int length)
+        {
+            if (length < 2) return false;
+
+            if (firstPacket[0] == 5 || firstPacket[0] == 4)
+                return true;
+
+            return length > 8
+                   && firstPacket[0] == 'C'
+                   && firstPacket[1] == 'O'
+                   && firstPacket[2] == 'N'
+                   && firstPacket[3] == 'N'
+                   && firstPacket[4] == 'E'
+                   && firstPacket[5] == 'C'
+                   && firstPacket[6] == 'T'
+                   && firstPacket[7] == ' ';
+        }
     }
+
+
+
 
     class HandlerConfig : ICloneable
     {

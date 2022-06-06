@@ -6,7 +6,7 @@ using System.Net.Sockets;
 
 namespace Shadowsocks.Controller
 {
-    class HttpPraser
+    class HttpParser
     {
         public bool httpProxy = false;
         public byte[] httpRequestBuffer;
@@ -18,7 +18,7 @@ namespace Shadowsocks.Controller
         protected int httpPort;
         bool redir;
 
-        public HttpPraser(bool redir = false)
+        public HttpParser(bool redir = false)
         {
             this.redir = redir;
         }
@@ -207,6 +207,7 @@ namespace Shadowsocks.Controller
             return cmd + result + "\r\n";
         }
 
+
         public int HandshakeReceive(byte[] _firstPacket, int _firstPacketLength, ref byte[] remoteHeaderSendBuffer)
         {
             remoteHeaderSendBuffer = null;
@@ -303,6 +304,7 @@ namespace Shadowsocks.Controller
             return 0;
         }
 
+
         public string Http200()
         {
             return "HTTP/1.1 200 Connection Established\r\n\r\n";
@@ -310,23 +312,24 @@ namespace Shadowsocks.Controller
 
         public string Http407()
         {
-            string header = "HTTP/1.1 407 Proxy Authentication Required\r\nProxy-Authenticate: Basic realm=\"RRR\"\r\n";
-            string content = "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN" +
-                        " \"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd\">" +
-                        "<HTML>" +
-                        "  <HEAD>" +
-                        "    <TITLE>Error</TITLE>" +
-                        "    <META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; charset=ISO-8859-1\">" +
-                        "  </HEAD>" +
-                        "  <BODY><H1>407 Proxy Authentication Required.</H1></BODY>" +
-                        "</HTML>\r\n";
-            return header + "\r\n" + content + "\r\n";
+            const string header = "HTTP/1.1 407 Proxy Authentication Required\r\nProxy-Authenticate: Basic realm=\"RRR\"\r\n";
+            const string content = "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN" +
+                                   " \"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd\">" +
+                                   "<HTML>" +
+                                   "  <HEAD>" +
+                                   "    <TITLE>Error</TITLE>" +
+                                   "    <META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; charset=ISO-8859-1\">" +
+                                   "  </HEAD>" +
+                                   "  <BODY><H1>407 Proxy Authentication Required.</H1></BODY>" +
+                                   "</HTML>\r\n";
+            const string resp = header + "\r\n" + content + "\r\n";
+            return resp;
         }
 
         public string Http500()
         {
-            string header = "HTTP/1.1 500 Internal Server Error\r\n";
-            string content = "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN" +
+            const string header = "HTTP/1.1 500 Internal Server Error\r\n";
+            const string content = "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN" +
                         " \"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd\">" +
                         "<HTML>" +
                         "  <HEAD>" +
@@ -335,7 +338,8 @@ namespace Shadowsocks.Controller
                         "  </HEAD>" +
                         "  <BODY><H1>500 Internal Server Error.</H1></BODY>" +
                         "</HTML>";
-            return header + "\r\n" + content + "\r\n";
+            const string resp = header + "\r\n" + content + "\r\n";
+            return resp;
         }
     }
 }

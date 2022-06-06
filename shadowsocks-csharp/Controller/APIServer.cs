@@ -10,7 +10,7 @@ using System.Web;
 
 namespace Shadowsocks.Controller
 {
-    class APIServer : Listener.Service
+    class APIServer : Listener.IService
     {
         private ShadowsocksController _controller;
         private Configuration _config;
