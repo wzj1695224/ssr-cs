@@ -1,6 +1,7 @@
 ﻿using Shadowsocks.Controller;
+using Shadowsocks.Controller.ServerStat;
 using Shadowsocks.Core;
-using Shadowsocks.Framework.Windows;
+using Shadowsocks.Framework.Windows.Forms;
 using Shadowsocks.Model;
 using System;
 using System.Collections.Generic;
@@ -10,7 +11,6 @@ using System.Drawing;
 using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
-using Shadowsocks.Controller.ServerStat;
 using static Shadowsocks.Controller.I18N.Static;
 
 
@@ -44,7 +44,9 @@ namespace Shadowsocks.View.ServerStat
             this.Icon = ResourceFactory.CreateIcon();
             this.Font = SystemFonts.MessageBoxFont;
             InitializeComponent();
+            InitializeComponent2();
             InitEvent();
+            InitMenu();
 
             var config = controller.GetCurrentConfiguration();
 
@@ -54,34 +56,23 @@ namespace Shadowsocks.View.ServerStat
             UpdateTitle();
             UpdateServerStat();
 
-            InitMenu();
             controller.ConfigChanged += OnConfigChanged;
 
-            InitServerDataGrid();
+            SetupServerDataGrid();
             AutoSizeFinal();
+        }
+
+
+        private void InitializeComponent2()
+        {
+            ServerDataGrid.UseDoubleBuffer();
+            ServerDataGrid.UseDoubleBuffer();
         }
 
 
         private void InitEvent()
         {
 			InitServerDataGridEvents();
-        }
-
-
-        private void InitServerDataGrid()
-        {
-            var mul = DPI.DpiMul;
-
-            foreach (DataGridViewColumn column in ServerDataGrid.Columns)
-            {
-                // header text 
-                column.HeaderText = S(column.HeaderText);
-
-                // width with dpi
-                column.Width = column.Width * mul / 4;
-            }
-
-            ServerDataGrid.RowTemplate.Height = 20 * mul / 4;
         }
 
 

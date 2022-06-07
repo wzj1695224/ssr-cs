@@ -1,24 +1,34 @@
-﻿using System;
+﻿using Shadowsocks.Controller.ServerStat;
+using Shadowsocks.Framework.Windows;
+using System;
 using System.Windows.Forms;
-using Shadowsocks.Controller.ServerStat;
+using static Shadowsocks.Controller.I18N.Static;
 
 
 namespace Shadowsocks.View.ServerStat
 {
 	public partial class ServerStatForm
 	{
-		private class DoubleBufferListView : DataGridView
+
+		private void SetupServerDataGrid()
 		{
-			public DoubleBufferListView()
+			var mul = DPI.DpiMul;
+
+			foreach (DataGridViewColumn column in ServerDataGrid.Columns)
 			{
-				SetStyle(ControlStyles.DoubleBuffer
-						| ControlStyles.OptimizedDoubleBuffer
-						| ControlStyles.UserPaint
-						| ControlStyles.AllPaintingInWmPaint
-						, true);
-				UpdateStyles();
+				// header text 
+				column.HeaderText = S(column.HeaderText);
+
+				// width with dpi
+				column.Width = column.Width * mul / 4;
 			}
+
+			ServerDataGrid.RowTemplate.Height = 20 * mul / 4;
 		}
+
+
+
+
 
 
 
@@ -83,6 +93,7 @@ namespace Shadowsocks.View.ServerStat
 				}
 			}
 		}
+
 	}
 
 

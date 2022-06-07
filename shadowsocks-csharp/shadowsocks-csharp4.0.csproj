@@ -179,6 +179,9 @@
     <Compile Include="Framework\Net\NetTool.cs" />
     <Compile Include="Framework\Util\ByteUtil.cs" />
     <Compile Include="Framework\Windows\DPI.cs" />
+    <Compile Include="Framework\Windows\Forms\Control\ControlHelper.cs" />
+    <Compile Include="Framework\Windows\Forms\DataGridView\DataGridViewExtension.cs" />
+    <Compile Include="Framework\Windows\Forms\DataGridView\DataGridViewHelper.cs" />
     <Compile Include="Framework\Windows\Forms\Menu\MenuFactory.cs" />
     <Compile Include="Model\ConfigurationModel.cs" />
     <Compile Include="Model\Host.cs" />
@@ -259,7 +262,7 @@
     <Compile Include="View\ServerStat\Menu.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="View\ServerStat\ServerDataGrid_Def.cs">
+    <Compile Include="View\ServerStat\ServerDataGrid.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="View\ServerStat\ServerDataGrid_Update.cs" />

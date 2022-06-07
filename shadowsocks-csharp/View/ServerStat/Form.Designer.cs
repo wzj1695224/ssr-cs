@@ -46,7 +46,7 @@
 			System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle15 = new System.Windows.Forms.DataGridViewCellStyle();
 			System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle16 = new System.Windows.Forms.DataGridViewCellStyle();
 			System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle17 = new System.Windows.Forms.DataGridViewCellStyle();
-			this.ServerDataGrid = new Shadowsocks.View.ServerStat.ServerStatForm.DoubleBufferListView();
+			this.ServerDataGrid = new System.Windows.Forms.DataGridView();
 			this.updateTimer = new System.Windows.Forms.Timer(this.components);
 			this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
 			this.ID = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -373,7 +373,7 @@
         #endregion
         private System.Windows.Forms.Timer updateTimer;
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
-        private DoubleBufferListView ServerDataGrid;
+        private System.Windows.Forms.DataGridView ServerDataGrid;
 		private System.Windows.Forms.DataGridViewTextBoxColumn ID;
 		private System.Windows.Forms.DataGridViewTextBoxColumn Group;
 		private System.Windows.Forms.DataGridViewTextBoxColumn Server;
