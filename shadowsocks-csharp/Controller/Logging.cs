@@ -1,10 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Shadowsocks.Obfs;
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Sockets;
 using System.Text;
-using Shadowsocks.Obfs;
+
 
 namespace Shadowsocks.Controller
 {
@@ -16,6 +16,133 @@ namespace Shadowsocks.Controller
         Error,
         Assert,
     }
+
+
+
+
+    internal class Logger
+    {
+	    private readonly string[] LevelStr = new[]
+        {
+            "Debug",
+            "Info",
+            "Warn",
+            "Error",
+            "Assert"
+        };
+
+
+        private readonly TextWriter _out;
+
+
+        public Logger(TextWriter @out)
+        {
+	        _out = @out;
+        }
+
+
+        public void Log(LogLevel level, params object[] s)
+        {
+	        var time = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+	        var levelChar = LevelStr[(int)level][0];
+
+            _out.Write(time);
+            _out.Write("  ");
+            _out.Write(levelChar);
+            _out.Write("  ");
+
+            for (var i = 0; i < s.Length - 1; i++)
+            {
+				_out.Write(s[i]);
+                _out.Write(' ');
+            }
+            _out.Write(s[s.Length - 1]);
+
+            _out.WriteLine();
+        }
+    }
+
+
+
+
+    internal  class DateFileWriter : TextWriter
+    {
+        public override Encoding Encoding { get; }
+
+        private readonly string _dir;
+        private readonly string _name;
+
+        private FileStream   _file         = null;
+        private StreamWriter _fileWritter  = null;
+        private DateTime?    _fileDate     = null;
+        private object       _fileLock     = new object();
+
+
+        public DateFileWriter(string dir, string name)
+        {
+            _name = name;
+        }
+        
+
+        private StreamWriter GetWriter()
+        {
+	        var today = DateTime.Today;
+	        if (_fileDate == today)
+                return _fileWritter;
+
+            lock (_fileLock)
+            {
+                if (_fileDate == today)
+                    return _fileWritter;
+                
+                var filename = $"{_name}_{today:yyyy-MM-dd}.log";
+                _fileDate = today;
+                _file = CreateFIleStream(_dir, filename);
+                _fileWritter = new StreamWriter(_file);
+            }
+
+            return _fileWritter;
+        }
+
+        private FileStream CreateFIleStream(string dir, string filename)
+        {
+            if (!Directory.Exists(dir))
+                Directory.CreateDirectory(dir);
+            var path = Path.Combine(dir, filename);
+            return new FileStream(path, FileMode.Append);
+        }
+
+
+        public override void WriteLine(string value)
+        {
+	        try
+	        {
+                GetWriter().WriteLine(value);
+	        }
+	        catch (Exception e)
+	        {
+		        Console.WriteLine(e);
+		        throw;
+	        }
+        }
+
+
+        public override void Write(string value)
+        {
+            try
+            {
+                GetWriter().Write(value);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
+        }
+    }
+
+
+
 
     public class Logging
     {
@@ -29,6 +156,7 @@ namespace Shadowsocks.Controller
         private static object _lock = new object();
         public static bool save_to_file = true;
 
+
         public static bool OpenLogFile()
         {
             try
@@ -37,20 +165,20 @@ namespace Shadowsocks.Controller
 
                 if (save_to_file)
                 {
-                    string curpath = Path.Combine(System.Windows.Forms.Application.StartupPath, @"temp");// Path.GetFullPath(".");//Path.GetTempPath();
-                    LogFilePath = curpath;
-                    if (!Directory.Exists(curpath))
-                    {
-                        Directory.CreateDirectory(curpath);
-                    }
-                    string new_date = DateTime.Now.ToString("yyyy-MM");
+                    var dir = Path.Combine(System.Windows.Forms.Application.StartupPath, @"temp");// Path.GetFullPath(".");//Path.GetTempPath();
+                    if (!Directory.Exists(dir))
+	                    Directory.CreateDirectory(dir);
+                    
+                    var new_date = DateTime.Now.ToString("yyyy-MM");
                     LogFileName = "shadowsocks_" + new_date + ".log";
-                    LogFile = Path.Combine(curpath, LogFileName);
+                    LogFile = Path.Combine(dir, LogFileName);
                     _logFileStream = new FileStream(LogFile, FileMode.Append);
                     _logStreamWriter = new StreamWriterWithTimestamp(_logFileStream);
                     _logStreamWriter.AutoFlush = true;
                     Console.SetOut(_logStreamWriter);
                     Console.SetError(_logStreamWriter);
+
+                    LogFilePath = dir;
                     date = new_date;
                 }
                 else
@@ -68,6 +196,7 @@ namespace Shadowsocks.Controller
             }
         }
 
+
         private static void CloseLogFile()
         {
             _logStreamWriter?.Dispose();
@@ -77,6 +206,7 @@ namespace Shadowsocks.Controller
             _logFileStream = null;
         }
 
+
         public static void Clear()
         {
             CloseLogFile();
@@ -85,6 +215,20 @@ namespace Shadowsocks.Controller
                 File.Delete(LogFile);
             }
             OpenLogFile();
+        }
+
+
+        public static void Log(LogLevel level, object s)
+        {
+            UpdateLogFile();
+            var strMap = new[]{
+                "Debug",
+                "Info",
+                "Warn",
+                "Error",
+                "Assert",
+            };
+            Console.WriteLine($@"[{strMap[(int)level]}] {s}");
         }
 
         public static void Error(object o)
@@ -177,6 +321,7 @@ namespace Shadowsocks.Controller
             }
         }
 
+
         public static bool LogSocketException(string remarks, string server, Exception e)
         {
             UpdateLogFile();
@@ -250,18 +395,6 @@ namespace Shadowsocks.Controller
                 }
             }
             return false;
-        }
-        public static void Log(LogLevel level, object s)
-        {
-            UpdateLogFile();
-            var strMap = new []{
-                "Debug",
-                "Info",
-                "Warn",
-                "Error",
-                "Assert",
-            };
-            Console.WriteLine($@"[{strMap[(int)level]}] {s}");
         }
 
         [Conditional("DEBUG")]

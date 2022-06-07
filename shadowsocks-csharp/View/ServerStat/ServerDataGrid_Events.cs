@@ -53,7 +53,7 @@ namespace Shadowsocks.View.ServerStat
 
 		private void ServerDataGrid_CellClick(object sender, DataGridViewCellEventArgs e, DataGridViewCell cell, DataGridViewColumn column, int id)
 		{
-			var config = controller.GetCurrentConfiguration();
+			var config = _controller.GetCurrentConfiguration();
 			var server = config.configs[id];
 			var host = server.server;
 
@@ -62,8 +62,8 @@ namespace Shadowsocks.View.ServerStat
 				case "Server":
 					Console.WriteLine("config.checkSwitchAutoCloseAll:" + config.checkSwitchAutoCloseAll);
 					if (config.checkSwitchAutoCloseAll)
-						controller.DisconnectAllConnections();
-					controller.SelectServerIndex(id);
+						_controller.DisconnectAllConnections();
+					_controller.SelectServerIndex(id);
 					break;
 				case "Group":
 					{
@@ -74,13 +74,13 @@ namespace Shadowsocks.View.ServerStat
 							var servers = config.configs.Where(s => s.group == group);
 							foreach (var s in servers)
 								s.enable = enable;
-							controller.SelectServerIndex(config.index);
+							_controller.SelectServerIndex(config.index);
 						}
 						break;
 					}
 				case "Enable":
 					server.enable = !server.enable;
-					controller.SelectServerIndex(config.index);
+					_controller.SelectServerIndex(config.index);
 					break;
 				case "Ping":
 					_serverDiagnostic.PingAsync(host, false);
@@ -93,14 +93,14 @@ namespace Shadowsocks.View.ServerStat
 
 		private void ServerDataGrid_CellDoubleClick(object sender, DataGridViewCellEventArgs e, DataGridViewCell cell, DataGridViewColumn column, int id)
 		{
-			var config = controller.GetCurrentConfiguration();
+			var config = _controller.GetCurrentConfiguration();
 			var server = config.configs[id];
 
 			switch (column.Name)
 			{
 				case "ID":
 				case "Server":
-					controller.ShowConfigForm(id);
+					_controller.ShowConfigForm(id);
 					break;
 				case "Connecting":
 					server.GetConnections().CloseAll();
@@ -255,14 +255,14 @@ namespace Shadowsocks.View.ServerStat
 			var id = (int)idCell.Value;
 			var column = ServerDataGrid.Columns[cell.ColumnIndex];
 
-			var config = controller.GetCurrentConfiguration();
+			var config = _controller.GetCurrentConfiguration();
 			var server = config.configs[id];
 
 			switch (column.Name)
 			{
 				case "Server":
 				{
-					controller.SelectServerIndex(id);
+					_controller.SelectServerIndex(id);
 					break;
 				}
 				case "Group":
@@ -274,14 +274,14 @@ namespace Shadowsocks.View.ServerStat
 						var servers = config.configs.Where(s => s.group == group);
 						foreach (var s in servers) 
 							s.enable = enable;
-						controller.SelectServerIndex(config.index);
+						_controller.SelectServerIndex(config.index);
 					}
 					break;
 				}
 				case "Enable":
 				{
 					server.enable = !server.enable;
-					controller.SelectServerIndex(config.index);
+					_controller.SelectServerIndex(config.index);
 					break;
 				}
 			}

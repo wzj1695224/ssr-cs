@@ -62,7 +62,7 @@ namespace Shadowsocks.View.ServerStat
 
 		private void ClearItem_Click(object sender, EventArgs e)
 		{
-			Configuration config = controller.GetCurrentConfiguration();
+			Configuration config = _controller.GetCurrentConfiguration();
 			foreach (Server server in config.configs)
 			{
 				server.ServerSpeedLog().Clear();
@@ -78,14 +78,14 @@ namespace Shadowsocks.View.ServerStat
 
 		private void Disconnect_Click(object sender, EventArgs e)
 		{
-			controller.DisconnectAllConnections();
+			_controller.DisconnectAllConnections();
 			Core.Model.Server.Server.GetForwardServerRef().GetConnections().CloseAll();
 		}
 
 
 		private void ClearMaxSpeed_Click(object sender, EventArgs e)
 		{
-			Configuration config = controller.GetCurrentConfiguration();
+			Configuration config = _controller.GetCurrentConfiguration();
 			foreach (Server server in config.configs)
 			{
 				server.ServerSpeedLog().ClearMaxSpeed();
@@ -95,12 +95,12 @@ namespace Shadowsocks.View.ServerStat
 
 		private void ClearSelectedTotal_Click(object sender, EventArgs e)
 		{
-			Configuration config = controller.GetCurrentConfiguration();
+			Configuration config = _controller.GetCurrentConfiguration();
 			if (config.index >= 0 && config.index < config.configs.Count)
 			{
 				try
 				{
-					controller.ClearTransferTotal(config.configs[config.index].server);
+					_controller.ClearTransferTotal(config.configs[config.index].server);
 				}
 				catch { }
 			}
@@ -109,17 +109,17 @@ namespace Shadowsocks.View.ServerStat
 
 		private void ClearTotal_Click(object sender, EventArgs e)
 		{
-			Configuration config = controller.GetCurrentConfiguration();
+			Configuration config = _controller.GetCurrentConfiguration();
 			foreach (Server server in config.configs)
 			{
-				controller.ClearTransferTotal(server.server);
+				_controller.ClearTransferTotal(server.server);
 			}
 		}
 
 
 		private void copyLinkItem_Click(object sender, EventArgs e)
 		{
-			Configuration config = controller.GetCurrentConfiguration();
+			Configuration config = _controller.GetCurrentConfiguration();
 			if (config.index >= 0 && config.index < config.configs.Count)
 			{
 				try
@@ -134,7 +134,7 @@ namespace Shadowsocks.View.ServerStat
 
 		private void copyGroupLinkItem_Click(object sender, EventArgs e)
 		{
-			Configuration config = controller.GetCurrentConfiguration();
+			Configuration config = _controller.GetCurrentConfiguration();
 			if (config.index >= 0 && config.index < config.configs.Count)
 			{
 				string group = config.configs[config.index].group;
@@ -156,7 +156,7 @@ namespace Shadowsocks.View.ServerStat
 
 		private void copyEnableLinksItem_Click(object sender, EventArgs e)
 		{
-			Configuration config = controller.GetCurrentConfiguration();
+			Configuration config = _controller.GetCurrentConfiguration();
 			string link = "";
 			for (int index = 0; index < config.configs.Count; ++index)
 			{
@@ -174,7 +174,7 @@ namespace Shadowsocks.View.ServerStat
 
 		private void copyLinksItem_Click(object sender, EventArgs e)
 		{
-			Configuration config = controller.GetCurrentConfiguration();
+			Configuration config = _controller.GetCurrentConfiguration();
 			string link = "";
 			for (int index = 0; index < config.configs.Count; ++index)
 			{
@@ -190,7 +190,7 @@ namespace Shadowsocks.View.ServerStat
 
 		private void PingAllServer(object sender, EventArgs e)
 		{
-			var config = controller.GetCurrentConfiguration();
+			var config = _controller.GetCurrentConfiguration();
 			var servers = config.configs;
 			foreach (var server in servers)
 			{

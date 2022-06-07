@@ -1,18 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
+﻿using Shadowsocks.Controller;
+using Shadowsocks.Properties;
+using System;
 using System.Drawing;
 using System.IO;
-using System.Text;
 using System.Windows.Forms;
-using Shadowsocks.Controller;
-using Shadowsocks.Model;
-using Shadowsocks.Properties;
+
 
 namespace Shadowsocks.View
 {
-    public partial class LogForm : Form
+	public partial class LogForm : Form
     {
         private readonly ShadowsocksController _controller;
 
@@ -21,6 +17,7 @@ namespace Shadowsocks.View
         private string _currentLogFile;
         private string _currentLogFileName;
         private long _currentOffset;
+
 
         public LogForm(ShadowsocksController controller)
         {
@@ -45,6 +42,9 @@ namespace Shadowsocks.View
             alwaysOnTopToolStripMenuItem.Text = I18N.GetString("&Always on top");
             Text = I18N.GetString("Log Viewer");
         }
+
+
+
 
         private void closeToolStripMenuItem_Click(object sender, EventArgs e)
         {

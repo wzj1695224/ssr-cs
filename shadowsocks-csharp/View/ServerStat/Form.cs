@@ -12,33 +12,32 @@ using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
 using static Shadowsocks.Controller.I18N.Static;
+using static Shadowsocks.Framework.Windows.WM;
 
 
 namespace Shadowsocks.View.ServerStat
 {
 	public partial class ServerStatForm : Form
     {
-        private ShadowsocksController controller;
-        private ServerDiagnostic _serverDiagnostic;
+        private readonly ShadowsocksController _controller;
+        private readonly ServerDiagnostic      _serverDiagnostic;
 
-        //private ContextMenu contextMenu1;
-        private List<int> serverOrder = new List<int>();
+        private Thread                  _workerThread;
+        private volatile bool           _workerRunning  = false;
+        private readonly AutoResetEvent _workerEvent    = new AutoResetEvent(false);
 
         private int _updateSkip = 0;
         private int _updateTickCount = 0;
 
         private ServerSpeedLogShow[] _serverStats;
-
-        private Thread                  _workerThread;
-        private volatile bool           _workerRunning  = false;
-        private readonly AutoResetEvent _workerEvent    = new AutoResetEvent(false);
+        private List<int> serverOrder = new List<int>();
 
 
 
 
         public ServerStatForm(ShadowsocksController controller, ServerDiagnostic serverDiagnostic)
         {
-            this.controller = controller;
+            this._controller = controller;
             this._serverDiagnostic = serverDiagnostic;
 
             this.Icon = ResourceFactory.CreateIcon();
@@ -65,7 +64,6 @@ namespace Shadowsocks.View.ServerStat
 
         private void InitializeComponent2()
         {
-            ServerDataGrid.UseDoubleBuffer();
             ServerDataGrid.UseDoubleBuffer();
         }
 
@@ -116,8 +114,8 @@ namespace Shadowsocks.View.ServerStat
             var title = S("ServerStat");
             const string version = UpdateChecker.FullVersion;
             var count = Core.Model.Server.Server.GetForwardServerRef().GetConnections().Count;
-            var share = controller.GetCurrentConfiguration().shareOverLan ? "any" : "local";
-            var port = controller.GetCurrentConfiguration().localPort;
+            var share = _controller.GetCurrentConfiguration().shareOverLan ? "any" : "local";
+            var port = _controller.GetCurrentConfiguration().localPort;
             var path = Application.StartupPath;
 
             this.Text = $@"{title} {version}    Conn {count}    {share}:{port}    {path}";
@@ -140,7 +138,7 @@ namespace Shadowsocks.View.ServerStat
         {
             while (_workerRunning)
             {
-                var config = controller.GetCurrentConfiguration();
+                var config = _controller.GetCurrentConfiguration();
                 var servers = config.configs;
 
                 _serverStats = servers
@@ -158,7 +156,7 @@ namespace Shadowsocks.View.ServerStat
                 return;
 
             var rowCount = ServerDataGrid.RowCount;
-            var config = controller.GetCurrentConfiguration();
+            var config = _controller.GetCurrentConfiguration();
 
             var serverCount = config.configs.Count;
 
@@ -219,7 +217,7 @@ namespace Shadowsocks.View.ServerStat
 
         private void Form_FormClosed(object sender, FormClosedEventArgs e)
         {
-            controller.ConfigChanged -= OnConfigChanged;
+            _controller.ConfigChanged -= OnConfigChanged;
 
             var thread = _workerThread;
             _workerThread = null;
@@ -250,13 +248,7 @@ namespace Shadowsocks.View.ServerStat
 
         protected override void WndProc(ref Message message)
         {
-            const int WM_SIZING = 532;
-            //const int WM_SIZE = 533;
-            const int WM_MOVING = 534;
-            const int WM_SYSCOMMAND = 0x0112;
-            const int SC_MINIMIZE = 0xF020;
-
-            switch (message.Msg)
+	        switch (message.Msg)
             {
                 case WM_SIZING:
                 case WM_MOVING:

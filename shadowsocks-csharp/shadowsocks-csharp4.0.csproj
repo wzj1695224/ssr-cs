@@ -183,6 +183,7 @@
     <Compile Include="Framework\Windows\Forms\DataGridView\DataGridViewExtension.cs" />
     <Compile Include="Framework\Windows\Forms\DataGridView\DataGridViewHelper.cs" />
     <Compile Include="Framework\Windows\Forms\Menu\MenuFactory.cs" />
+    <Compile Include="Framework\Windows\WinMsg.cs" />
     <Compile Include="Model\ConfigurationModel.cs" />
     <Compile Include="Model\Host.cs" />
     <Compile Include="Model\IPRangeSet.cs" />
@@ -373,6 +374,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Core\Model\Server\Impl\" />
+    <Folder Include="Framework\Log\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
