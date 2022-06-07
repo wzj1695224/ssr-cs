@@ -141,6 +141,9 @@ namespace Shadowsocks.View.ServerStat
 
 		private void ServerDataGrid_SortCompare(object sender, DataGridViewSortCompareEventArgs e)
 		{
+			var cell1 = ServerDataGrid[e.Column.Index, e.RowIndex1];
+			var cell2 = ServerDataGrid[e.Column.Index, e.RowIndex2];
+
 			switch (e.Column.Name)
 			{
 				case "Server":
@@ -177,6 +180,14 @@ namespace Shadowsocks.View.ServerStat
 					break;
 				}
 				case "Ping":
+				{
+					var state1 = CellState.Get<CellState.Ping>(cell1);
+					var state2 = CellState.Get<CellState.Ping>(cell2);
+					var ping1 = state1?.Time ?? CellState.Ping.NOT_PING_TIME;
+					var ping2 = state2?.Time ?? CellState.Ping.NOT_PING_TIME;
+					e.SortResult = (int)(ping1 - ping2);
+					break;
+				}
 				case "AvgLatency":
 				case "AvgDownSpeed":
 				case "MaxDownSpeed":

@@ -259,6 +259,9 @@
     <Compile Include="View\ServerStat\Menu.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="View\ServerStat\ServerDataGrid_Def.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="View\ServerStat\ServerDataGrid_Update.cs" />
     <Compile Include="View\ServerStat\ServerDataGrid_Events.cs" />
     <Compile Include="View\ServerStat\Size.cs" />

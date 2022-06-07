@@ -5,6 +5,7 @@ using Shadowsocks.Model;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Threading;
@@ -17,20 +18,6 @@ namespace Shadowsocks.View.ServerStat
 {
 	public partial class ServerStatForm : Form
     {
-        class DoubleBufferListView : DataGridView
-        {
-            public DoubleBufferListView()
-            {
-                SetStyle(ControlStyles.DoubleBuffer
-                        | ControlStyles.OptimizedDoubleBuffer
-                        | ControlStyles.UserPaint
-                        | ControlStyles.AllPaintingInWmPaint
-                        , true);
-                UpdateStyles();
-            }
-        }
-
-
         private ShadowsocksController controller;
         private ServerDiagnostic _serverDiagnostic;
 
@@ -207,9 +194,9 @@ namespace Shadowsocks.View.ServerStat
             {
                 ServerDataGrid_UpdateCells(config);
             }
-            catch
+            catch (Exception ex)
             {
-                // ignore
+                Debug.WriteLine(ex);
             }
 
             // apply sort to new data

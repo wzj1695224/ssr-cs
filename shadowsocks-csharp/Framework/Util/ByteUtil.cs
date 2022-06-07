@@ -85,7 +85,7 @@ namespace Shadowsocks.Framework.Util
 			{
 				try
 				{
-					return (long)Convert.ToDouble(bytesStr);
+					return Convert.ToInt64(bytesStr);
 				}
 				catch
 				{
@@ -95,9 +95,9 @@ namespace Shadowsocks.Framework.Util
 
 			// parse num
 			var numStr = bytesStr.Substring(0, bytesStr.Length - 1);
-			var num = Convert.ToDouble(numStr);
+			var num = Convert.ToInt64(numStr);
 
-			return (long)(num * mul);
+			return num * mul;
 		}
 	}
 }

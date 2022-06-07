@@ -3,11 +3,13 @@ using Shadowsocks.Framework.Net;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using Microsoft.VisualBasic.Logging;
 
 
 [assembly: InternalsVisibleTo("test")]
@@ -83,6 +85,17 @@ namespace Shadowsocks.Controller.ServerStat
 
 
 
+	public enum PingState
+	{
+		NotPing,
+		Pinging,
+		Timeout,
+		Complete
+	}
+
+
+
+
 	public class ServerDiagnostic
 	{
 		private const int PingTimeout = 500;  
@@ -108,6 +121,18 @@ namespace Shadowsocks.Controller.ServerStat
 				try
 				{
 					DoPing(host);
+				}
+				catch (PingException e)
+				{
+					Debug.WriteLine($@"Ping {host}:\n" + e);
+					if (throwIfFail)
+						throw;
+				}
+				catch (Exception e)
+				{
+					Debug.WriteLine($@"Ping {host}:\n" + e);
+					if (throwIfFail)
+						throw;
 				}
 				finally
 				{

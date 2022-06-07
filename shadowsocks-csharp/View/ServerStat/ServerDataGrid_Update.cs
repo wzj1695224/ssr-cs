@@ -3,8 +3,11 @@ using Shadowsocks.SystemX.Drawing;
 using System;
 using System.Diagnostics;
 using System.Drawing;
+using System.Globalization;
 using System.Linq;
+using System.Net.NetworkInformation;
 using System.Windows.Forms;
+using Shadowsocks.Controller.ServerStat;
 using static System.Int32;
 using static Shadowsocks.Framework.Util.ByteUnit;
 using static Shadowsocks.Framework.Util.ByteUtil;
@@ -192,33 +195,51 @@ namespace Shadowsocks.View.ServerStat
 					break;
 				}
 				case "Ping":
+				{
+					var cellState = CellState.GetOrCreate<CellState.Ping>(cell);
+
+					// update CellState
+					if (_serverDiagnostic.IsPinging(host))
+						cellState.IsPinging();
+					else if (_serverDiagnostic.TryGetHostPingHistory(host, out var history))
 					{
-						if ( _serverDiagnostic.IsPinging(host) )
-						{
-							SetCellText(cell, "...");
+						var times = history[0]?.Replies
+							.Where(r => r.Status == IPStatus.Success)
+							.Select(r => r.RoundtripTime)
+							.ToArray();
+
+						if (times == null || times.Length == 0)
+							cellState.Timeout();
+						else
+							cellState.Complete((long)times.Average());
+					}
+
+					// update cell style
+					switch (cellState.State)
+					{
+						case PingState.NotPing:
+							SetCellText(cell, "-");
 							SetCellBackColor(cell, Color.White);
 							break;
-						}
-						
-						if (_serverDiagnostic.TryGetHostPingHistory(host, out var history))
-						{
-							var pingAvg = history[0]?.Replies
-								.Select(r => r.RoundtripTime)
-								.Average();
-							if (pingAvg != null)
-							{
-								var ping = (long)pingAvg;
-								var color = GetLevelColor(ping, PingLevelTime, PingLevelColors);
-								SetCellBackColor(cell, color); 
-								SetCellText(cell, ping);
-								break;
-							}
-						}
-
-						SetCellText(cell, "-");
-						SetCellBackColor(cell, Color.White);
-						break;
+						case PingState.Pinging:
+							SetCellText(cell, "📞");
+							SetCellBackColor(cell, Color.DeepSkyBlue);
+							break;
+						case PingState.Timeout:
+							SetCellText(cell, "🚫");
+							SetCellBackColor(cell, Color.Red);
+							break;
+						case PingState.Complete:
+							var pingTime = cellState.Time;
+							var color = GetLevelColor(pingTime, PingLevelTime, PingLevelColors);
+							SetCellBackColor(cell, color);
+							SetCellText(cell, pingTime);
+							break;
+						default:
+							throw new ArgumentOutOfRangeException();
 					}
+					break;
+				}
 				case "AvgLatency" when serverSpeedLog.avgConnectTime >= 0:
 					SetCellText(cell, serverSpeedLog.avgConnectTime / 1000);
 					break;
