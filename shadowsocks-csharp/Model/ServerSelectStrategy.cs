@@ -46,9 +46,9 @@ namespace Shadowsocks.Model
 
         private double Algorithm2(ServerSpeedLog serverSpeedLog) // perfer less delay
         {
-            if (serverSpeedLog.ErrorContinurousTimes >= 20)
+            if (serverSpeedLog.ErrorContinuousTimes >= 20)
                 return 1;
-            else if (serverSpeedLog.ErrorContinurousTimes >= 10)
+            else if (serverSpeedLog.ErrorContinuousTimes >= 10)
                 return MIN_CHANCE;
             else if (serverSpeedLog.AvgConnectTime < 0 && serverSpeedLog.TotalConnectTimes >= 3)
                 return MIN_CHANCE;
@@ -62,7 +62,7 @@ namespace Shadowsocks.Model
                 long connections = serverSpeedLog.TotalConnectTimes - serverSpeedLog.TotalDisconnectTimes;
                 double chance = MAX_CHANCE * 10.0 / avgConnectTime - connections * CONNECTION_PENALTY;
                 if (chance > MAX_CHANCE) chance = MAX_CHANCE;
-                chance -= serverSpeedLog.ErrorContinurousTimes * ERROR_PENALTY;
+                chance -= serverSpeedLog.ErrorContinuousTimes * ERROR_PENALTY;
                 if (chance < MIN_CHANCE) chance = MIN_CHANCE;
                 return chance;
             }
@@ -70,9 +70,9 @@ namespace Shadowsocks.Model
 
         private double Algorithm3(ServerSpeedLog serverSpeedLog) // perfer less error
         {
-            if (serverSpeedLog.ErrorContinurousTimes >= 20)
+            if (serverSpeedLog.ErrorContinuousTimes >= 20)
                 return 1;
-            else if (serverSpeedLog.ErrorContinurousTimes >= 10)
+            else if (serverSpeedLog.ErrorContinuousTimes >= 10)
                 return MIN_CHANCE;
             else if (serverSpeedLog.AvgConnectTime < 0 && serverSpeedLog.TotalConnectTimes >= 3)
                 return MIN_CHANCE;
@@ -86,7 +86,7 @@ namespace Shadowsocks.Model
                 long connections = serverSpeedLog.TotalConnectTimes - serverSpeedLog.TotalDisconnectTimes;
                 double chance = MAX_CHANCE * 1.0 / (avgConnectTime / 500 + 1) - connections * CONNECTION_PENALTY;
                 if (chance > MAX_CHANCE) chance = MAX_CHANCE;
-                chance -= serverSpeedLog.ErrorContinurousTimes * ERROR_PENALTY;
+                chance -= serverSpeedLog.ErrorContinuousTimes * ERROR_PENALTY;
                 if (chance < MIN_CHANCE) chance = MIN_CHANCE;
                 return chance;
             }
@@ -94,9 +94,9 @@ namespace Shadowsocks.Model
 
         private double Algorithm4(ServerSpeedLog serverSpeedLog, long avg_speed, double zero_chance) // perfer fast speed
         {
-            if (serverSpeedLog.ErrorContinurousTimes >= 20)
+            if (serverSpeedLog.ErrorContinuousTimes >= 20)
                 return 1;
-            else if (serverSpeedLog.ErrorContinurousTimes >= 10)
+            else if (serverSpeedLog.ErrorContinuousTimes >= 10)
                 return MIN_CHANCE;
             else if (serverSpeedLog.AvgConnectTime < 0 && serverSpeedLog.TotalConnectTimes >= 3)
                 return MIN_CHANCE;
@@ -115,7 +115,7 @@ namespace Shadowsocks.Model
                 long connections = serverSpeedLog.TotalConnectTimes - serverSpeedLog.TotalDisconnectTimes;
                 double chance = MAX_CHANCE * speed_mul / (avgConnectTime / 500 + 1) - connections * CONNECTION_PENALTY;
                 if (chance > MAX_CHANCE) chance = MAX_CHANCE;
-                chance -= serverSpeedLog.ErrorContinurousTimes * ERROR_PENALTY;
+                chance -= serverSpeedLog.ErrorContinuousTimes * ERROR_PENALTY;
                 if (chance < MIN_CHANCE) chance = MIN_CHANCE;
                 return chance;
             }

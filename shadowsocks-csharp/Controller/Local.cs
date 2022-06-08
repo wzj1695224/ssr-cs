@@ -1,21 +1,19 @@
-﻿using System;
+﻿using Shadowsocks.Core.Model.Server;
+using Shadowsocks.Model;
+using Shadowsocks.Obfs;
+using Shadowsocks.Util;
+using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Net;
 using System.Net.Sockets;
-using Shadowsocks.Encryption;
-using Shadowsocks.Obfs;
-using Shadowsocks.Model;
-using System.Timers;
 using System.Threading;
-using OpenDNS;
-using Shadowsocks.Core.Model;
-using Shadowsocks.Core.Model.Server;
-using Shadowsocks.Util;
+using System.Timers;
+using static Shadowsocks.Framework.Util.CodeCleaner;
+
 
 namespace Shadowsocks.Controller
 {
-    class CallbackStatus
+	class CallbackStatus
     {
         protected int status;
 
@@ -220,29 +218,24 @@ namespace Shadowsocks.Controller
             CONNECTING = 2,
             CONNECTED = 3,
         }
-        private ConnectState state = ConnectState.READY;
 
         private ConnectState State
         {
-            get
+            get => _state;
+            set { lock (this)
             {
-                return this.state;
-            }
-            set
-            {
-                lock (this)
-                {
-                    this.state = value;
-                }
-            }
+	            _state = value;
+            } }
         }
+        private ConnectState _state = ConnectState.READY;
 
-        private void ResetTimeout(double time, bool reset_keep_alive = true)
+
+        private void ResetTimeout(double time, bool resetKeepAliveTries = true)
         {
             if (time <= 0 && timer == null)
                 return;
 
-            if (reset_keep_alive)
+            if (resetKeepAliveTries)
                 cfg.try_keep_alive = 0;
 
             if (time <= 0)
@@ -284,12 +277,11 @@ namespace Shadowsocks.Controller
             }
         }
 
+
         private void timer_Elapsed(object sender, ElapsedEventArgs e)
         {
-            if (closed)
-            {
-                return;
-            }
+            if (closed) return;
+            
             bool stop = false;
 
             try
@@ -325,9 +317,7 @@ namespace Shadowsocks.Controller
                         }
                         else
                         {
-                            if (s != null
-                                && connectionSendBufferList != null
-                                )
+                            if (s != null && connectionSendBufferList != null)
                             {
                                 if (lastErrCode == 0)
                                 {
@@ -346,12 +336,16 @@ namespace Shadowsocks.Controller
             {
                 //
             }
+
             if (stop)
             {
                 //Thread.Sleep(200);
                 Close();
             }
         }
+
+
+
 
         public void setServerTransferTotal(ServerTransferTotal transfer)
         {
@@ -552,50 +546,40 @@ namespace Shadowsocks.Controller
             }
         }
 
+
+
+
         private void BeginConnect(IPAddress ipAddress, int serverPort)
         {
             IPEndPoint remoteEP = new IPEndPoint(ipAddress, serverPort);
 
-            if (cfg.socks5RemotePort != 0
-                || connectionUDP == null
-                || connectionUDP != null && server.udp_over_tcp)
+            var useTcp = connectionUDP == null || (connectionUDP != null && server.udp_over_tcp);
+            if (cfg.socks5RemotePort != 0 || useTcp)
             {
-                remote = new ProxyEncryptSocket(ipAddress.AddressFamily,
-                    SocketType.Stream, ProtocolType.Tcp);
+                remote = new ProxyEncryptSocket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
                 remote.GetSocket().NoDelay = true;
-                try
-                {
-                    remote.CreateEncryptor(server.method, server.password);
-                }
-                catch
-                {
-
-                }
+                IgnoreError(() => remote.CreateEncryptor(server.method, server.password));
                 remote.SetProtocol(ObfsFactory.GetObfs(server.protocol));
                 remote.SetObfs(ObfsFactory.GetObfs(server.obfs));
             }
 
-            if (connectionUDP != null && !server.udp_over_tcp)
+            var useUdp = connectionUDP != null && !server.udp_over_tcp;
+            if (useUdp)
             {
                 try
                 {
-                    remoteUDP = new ProxyEncryptSocket(ipAddress.AddressFamily,
-                        SocketType.Dgram, ProtocolType.Udp);
-                    remoteUDP.GetSocket().Bind(new IPEndPoint(ipAddress.AddressFamily == AddressFamily.InterNetworkV6 ? IPAddress.IPv6Any : IPAddress.Any, 0));
+	                var localAddress = ipAddress.AddressFamily == AddressFamily.InterNetworkV6 ? IPAddress.IPv6Any : IPAddress.Any;
+	                var localEndpoint = new IPEndPoint(localAddress, 0);
 
+	                remoteUDP = new ProxyEncryptSocket(ipAddress.AddressFamily, SocketType.Dgram, ProtocolType.Udp);
+                    remoteUDP.GetSocket().Bind(localEndpoint);
                     remoteUDP.CreateEncryptor(server.method, server.password);
                     remoteUDP.SetProtocol(ObfsFactory.GetObfs(server.protocol));
                     remoteUDP.SetObfs(ObfsFactory.GetObfs(server.obfs));
                     if (server.server_udp_port == 0 || cfg.socks5RemotePort != 0)
-                    {
-                        IPEndPoint _remoteEP = new IPEndPoint(ipAddress, serverPort);
-                        remoteUDP.SetUdpEndPoint(_remoteEP);
-                    }
+	                    remoteUDP.SetUdpEndPoint(new IPEndPoint(ipAddress, serverPort));
                     else
-                    {
-                        IPEndPoint _remoteEP = new IPEndPoint(ipAddress, server.server_udp_port);
-                        remoteUDP.SetUdpEndPoint(_remoteEP);
-                    }
+                        remoteUDP.SetUdpEndPoint(new IPEndPoint(ipAddress, server.server_udp_port));
                 }
                 catch (SocketException)
                 {
@@ -616,8 +600,7 @@ namespace Shadowsocks.Controller
             else
             {
                 speedTester.BeginConnect();
-                IAsyncResult result = remote.BeginConnect(remoteEP,
-                    new AsyncCallback(ConnectCallback), new CallbackStatus());
+                IAsyncResult result = remote.BeginConnect(remoteEP, ConnectCallback, new CallbackStatus());
                 double t = cfg.connect_timeout <= 0 ? 30 : cfg.connect_timeout;
                 bool success = result.AsyncWaitHandle.WaitOne((int)(t * 1000), true);
                 if (!success)
@@ -637,26 +620,28 @@ namespace Shadowsocks.Controller
             }
         }
 
+
+
+
         public bool TryReconnect()
         {
             if (local_error)
                 return false;
-            if (cfg.reconnectTimesRemain > 0)
+            if (cfg.reconnectTimesRemain <= 0)
+	            return false;
+
+            switch (this.State)
             {
-                if (this.State == ConnectState.CONNECTING)
-                {
-                    return ReConnect();
-                }
-                else if (this.State == ConnectState.CONNECTED && lastErrCode == 8)
-                {
-                    if (connectionSendBufferList != null)
-                    {
-                        return ReConnect();
-                    }
-                }
+	            case ConnectState.CONNECTING:
+		            return ReConnect();
+	            case ConnectState.CONNECTED when lastErrCode == 8 && connectionSendBufferList != null:
+		            return ReConnect();
             }
-            return false;
+	        return false;
         }
+
+
+
 
         private void CloseSocket(ref Socket sock)
         {
@@ -845,6 +830,9 @@ namespace Shadowsocks.Controller
             }
         }
 
+
+
+
         private void Connect()
         {
             remote = null;
@@ -884,7 +872,7 @@ namespace Shadowsocks.Controller
             {
                 IPAddress ipAddress;
 
-                string host = cfg.targetHost;
+                var host = cfg.targetHost;
 
                 if (!IPAddress.TryParse(host, out ipAddress))
                 {
@@ -929,33 +917,41 @@ namespace Shadowsocks.Controller
                 }
                 server.GetConnections().AddRef(this);
             }
+
+            // get host & port, then connect
             try
             {
-                IPAddress ipAddress;
-                string serverHost = server.server;
+	            var serverHost = server.server;
                 int serverPort = server.server_port;
                 if (cfg.socks5RemotePort > 0)
                 {
                     serverHost = cfg.socks5RemoteHost;
                     serverPort = cfg.socks5RemotePort;
                 }
-                bool parsed = IPAddress.TryParse(serverHost, out ipAddress);
-                if (!parsed)
+
+                var hostIsAddress = IPAddress.TryParse(serverHost, out var ipAddress);
+
+                if ( !hostIsAddress )
                 {
-                    if (server.ServerSpeedLog().ErrorContinurousTimes > 10)
-                        server.DnsBuffer().force_expired = true;
-                    if (server.DnsBuffer().isExpired(serverHost))
+                    if (server.ServerSpeedLog().ErrorContinuousTimes > 10)
+                        server.DnsBuffer().ForceExpired = true;
+
+                    if (!server.DnsBuffer().IsExpired(serverHost))
                     {
-                        bool dns_ok = false;
+                        ipAddress = server.DnsBuffer().IP;
+                    }
+                    else
+                    {
+                        var dns_ok = false;
                         {
-                            DnsBuffer buf = server.DnsBuffer();
-                            if (Monitor.TryEnter(buf, buf.ip != null ? 100 : 1000000))
+                            var buf = server.DnsBuffer();
+                            if (Monitor.TryEnter(buf, buf.IP != null ? 100 : 1000000))
                             {
-                                if (buf.isExpired(serverHost))
+                                if (buf.IsExpired(serverHost))
                                 {
                                     if (serverHost.IndexOf('.') >= 0)
                                     {
-                                        ipAddress = Util.Utils.QueryDns(serverHost, cfg.local_dns_servers);
+                                        ipAddress = Utils.QueryDns(serverHost, cfg.local_dns_servers);
                                     }
                                     else
                                     {
@@ -969,25 +965,25 @@ namespace Shadowsocks.Controller
                                 }
                                 else
                                 {
-                                    ipAddress = buf.ip;
+                                    ipAddress = buf.IP;
                                     dns_ok = true;
                                 }
                                 Monitor.Exit(buf);
                             }
                             else
                             {
-                                if (buf.ip != null)
+                                if (buf.IP != null)
                                 {
-                                    ipAddress = buf.ip;
+                                    ipAddress = buf.IP;
                                     dns_ok = true;
                                 }
                             }
                         }
                         if (!dns_ok)
                         {
-                            if (server.DnsBuffer().ip != null)
+                            if (server.DnsBuffer().IP != null)
                             {
-                                ipAddress = server.DnsBuffer().ip;
+                                ipAddress = server.DnsBuffer().IP;
                             }
                             else
                             {
@@ -998,11 +994,8 @@ namespace Shadowsocks.Controller
                             }
                         }
                     }
-                    else
-                    {
-                        ipAddress = server.DnsBuffer().ip;
-                    }
                 }
+
                 BeginConnect(ipAddress, serverPort);
             }
             catch (Exception e)
@@ -1011,6 +1004,8 @@ namespace Shadowsocks.Controller
                 Close();
             }
         }
+
+
 
 
         private void ConnectCallback(IAsyncResult ar)
@@ -1101,8 +1096,7 @@ namespace Shadowsocks.Controller
             if (remote != null && remoteTCPIdle)
             {
                 remoteTCPIdle = false;
-                remote.BeginReceive(new byte[BufferSize], RecvSize, 0,
-                    new AsyncCallback(PipeRemoteReceiveCallback), null);
+                remote.BeginReceive(new byte[BufferSize], RecvSize, 0, PipeRemoteReceiveCallback, null);
             }
         }
 
@@ -1445,39 +1439,41 @@ namespace Shadowsocks.Controller
             }
         }
 
+
+
+
         private void PipeRemoteReceiveLoop()
         {
-            bool final_close = false;
-            byte[] recv_buffer = new byte[BufferSize * 4];
+            var final_close = false;
+            var buffer = new byte[BufferSize * 4];
 
-            DateTime beforeReceive = DateTime.Now;
+            var beforeReceive = DateTime.Now;
             while (!closed)
             {
                 try
                 {
-                    int protocolSize;
-                    bool sendback;
-                    int bytesRecv;
-                    int bytesRead = remote.Receive(recv_buffer, RecvSize, 0, out bytesRecv, out protocolSize, out sendback);
-                    DateTime now = DateTime.Now;
+                    var bytesRead = remote.Receive(buffer, RecvSize, 0, out var bytesRecv, out var protocolSize, out var sendback);
+
+                    var now = DateTime.Now;
                     if (remote != null && remote.IsClose)
                     {
                         final_close = true;
                         break;
                     }
                     if (closed)
-                    {
-                        break;
-                    }
+	                    break;
+                    
                     if (speedTester.BeginDownload())
                     {
-                        int pingTime = -1;
+                        var pingTime = -1;
                         if (speedTester.timeBeginDownload != null && speedTester.timeBeginUpload != null)
                             pingTime = (int)(speedTester.timeBeginDownload - speedTester.timeBeginUpload).TotalMilliseconds;
                         if (pingTime >= 0)
                             server.ServerSpeedLog().AddConnectTime(pingTime);
                     }
+
                     server.ServerSpeedLog().AddDownloadBytes(bytesRecv, now, speedTester.AddDownloadSize(bytesRecv));
+
                     ResetTimeout(cfg.TTL);
                     if (sendback)
                     {
@@ -1487,9 +1483,9 @@ namespace Shadowsocks.Controller
 
                     if (bytesRead > 0)
                     {
-                        byte[] remoteSendBuffer = new byte[BufferSize];
+                        var remoteSendBuffer = new byte[BufferSize];
 
-                        Array.Copy(recv_buffer, remoteSendBuffer, bytesRead);
+                        Array.Copy(buffer, remoteSendBuffer, bytesRead);
                         if (connectionUDP == null)
                         {
                             if (detector.OnRecv(remoteSendBuffer, bytesRead) > 0)
@@ -1536,6 +1532,9 @@ namespace Shadowsocks.Controller
             if (final_close)
                 Close();
         }
+
+
+
 
         // end ReceiveCallback
         private void PipeRemoteUDPReceiveCallback(IAsyncResult ar)

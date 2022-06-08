@@ -17,6 +17,7 @@ namespace Shadowsocks.Controller
         public abstract void Shutdown();
     }
 
+
     public class CallbackState
     {
         public byte[] buffer;
@@ -24,6 +25,9 @@ namespace Shadowsocks.Controller
         public int protocol_size;
         public object state;
     }
+
+
+
 
     public class ProxySocketTun
     {
@@ -57,41 +61,17 @@ namespace Shadowsocks.Controller
             return _socket;
         }
 
-        public bool IsClose
-        {
-            get
-            {
-                return _close;
-            }
-        }
+        public bool IsClose => _close;
 
         public bool GoS5Proxy
         {
-            get
-            {
-                return _proxy;
-            }
-            set
-            {
-                _proxy = value;
-            }
+            get => _proxy;
+            set => _proxy = value;
         }
 
-        public AddressFamily AddressFamily
-        {
-            get
-            {
-                return _socket.AddressFamily;
-            }
-        }
+        public AddressFamily AddressFamily => _socket.AddressFamily;
 
-        public int Available
-        {
-            get
-            {
-                return _socket.Available;
-            }
-        }
+        public int Available => _socket.Available;
 
         public void Shutdown(SocketShutdown how)
         {
@@ -435,6 +415,9 @@ namespace Shadowsocks.Controller
         }
     }
 
+
+
+
     public class ProxySocketTunLocal : ProxySocketTun
     {
         public string local_sendback_protocol;
@@ -483,6 +466,9 @@ namespace Shadowsocks.Controller
 
     }
 
+
+
+
     class ProxyEncryptSocket
     {
         protected Socket _socket;
@@ -514,75 +500,35 @@ namespace Shadowsocks.Controller
 
         protected bool _close;
 
+
         public ProxyEncryptSocket(AddressFamily af, SocketType type, ProtocolType protocol)
         {
             _socket = new Socket(af, type, protocol);
         }
+
 
         public Socket GetSocket()
         {
             return _socket;
         }
 
-        public bool IsClose
-        {
-            get
-            {
-                return _close;
-            }
-        }
+        public bool IsClose => _close;
 
         public bool GoS5Proxy
         {
-            get
-            {
-                return _proxy;
-            }
-            set
-            {
-                _proxy = value;
-            }
+            get => _proxy;
+            set => _proxy = value;
         }
 
-        public bool CanSendKeepAlive
-        {
-            get
-            {
-                return _protocol.isKeepAlive();
-            }
-        }
+        public bool CanSendKeepAlive => _protocol.isKeepAlive();
 
-        public bool isProtocolSendback
-        {
-            get
-            {
-                return _protocol.isAlwaysSendback();
-            }
-        }
+        public bool isProtocolSendback => _protocol.isAlwaysSendback();
 
-        public bool isObfsSendback
-        {
-            get
-            {
-                return _obfs.isAlwaysSendback();
-            }
-        }
+        public bool isObfsSendback => _obfs.isAlwaysSendback();
 
-        public AddressFamily AddressFamily
-        {
-            get
-            {
-                return _socket.AddressFamily;
-            }
-        }
+        public AddressFamily AddressFamily => _socket.AddressFamily;
 
-        public int Available
-        {
-            get
-            {
-                return _socket.Available;
-            }
-        }
+        public int Available => _socket.Available;
 
         public void Shutdown(SocketShutdown how)
         {

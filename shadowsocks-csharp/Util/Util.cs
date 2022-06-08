@@ -191,15 +191,17 @@ namespace Shadowsocks.Util
             }
         }
 
-        public static IPAddress QueryDns(string host, string dns_servers, bool IPv6_first = false)
+
+
+
+        public static IPAddress QueryDns(string host, string dnsServers, bool IPv6_first = false)
         {
-            IPAddress ret_ipAddress = null;
-            ret_ipAddress = _QueryDns(host, dns_servers, IPv6_first);
-            Logging.Info($"DNS query {host} answer {ret_ipAddress}");
-            return ret_ipAddress;
+            var retIPAddress = _QueryDns(host, dnsServers, IPv6_first);
+            Logging.Info($"DNS query {host} answer {retIPAddress}");
+            return retIPAddress;
         }
 
-        public static IPAddress _QueryDns(string host, string dns_servers, bool IPv6_first = false)
+        private static IPAddress _QueryDns(string host, string dns_servers, bool IPv6_first = false)
         {
             IPAddress ret_ipAddress = null;
             {
@@ -287,10 +289,12 @@ namespace Shadowsocks.Util
                         }
                     }
                 }
+
+
                 {
                     try
                     {
-                        GetHostEntryHandler callback = new GetHostEntryHandler(Dns.GetHostEntry);
+                        GetHostEntryHandler callback = Dns.GetHostEntry;
                         IAsyncResult result = callback.BeginInvoke(host, null, null);
                         if (result.AsyncWaitHandle.WaitOne(10000, true))
                         {
@@ -314,6 +318,9 @@ namespace Shadowsocks.Util
             }
             return ret_ipAddress;
         }
+
+
+
 
         public static string GetExecutablePath()
         {

@@ -201,8 +201,10 @@ namespace Shadowsocks.Controller
             return CONNECT_REMOTEPROXY;
         }
 
-        class Handler
-            : IHandler
+
+
+
+        class Handler : IHandler
         {
             private IPRangeSet _IPRange;
             private Configuration _config;

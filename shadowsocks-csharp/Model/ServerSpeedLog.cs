@@ -178,7 +178,7 @@ namespace Shadowsocks.Model
                 }
             }
         }
-        public long ErrorContinurousTimes
+        public long ErrorContinuousTimes
         {
             get
             {
@@ -281,13 +281,8 @@ namespace Shadowsocks.Model
                 }
             }
         }
-        public long AvgConnectTime
-        {
-            get
-            {
-                return avgConnectTime;
-            }
-        }
+        public long AvgConnectTime => avgConnectTime;
+
         public void ClearError()
         {
             lock (this)
@@ -561,18 +556,18 @@ namespace Shadowsocks.Model
                 errorEmptyTimes = 0;
             }
         }
+
+
         public void AddConnectTime(int millisecond)
         {
+
+            if (millisecond == 0)
+	            millisecond = 10;
+            else
+	            millisecond *= 1000;
+
             lock (this)
             {
-                if (millisecond == 0)
-                {
-                    millisecond = 10;
-                }
-                else
-                {
-                    millisecond *= 1000;
-                }
                 if (avgConnectTime == -1)
                 {
                     avgConnectTime = millisecond;

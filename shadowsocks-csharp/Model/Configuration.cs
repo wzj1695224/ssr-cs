@@ -217,7 +217,7 @@ namespace Shadowsocks.Model
                 if (sameHostForSameTarget && !forceRandom && targetAddr != null && uricache.ContainsKey(targetAddr))
                 {
                     UriVisitTime visit = uricache.Get(targetAddr);
-                    if (visit.index < configs.Count && configs[visit.index].enable && configs[visit.index].ServerSpeedLog().ErrorContinurousTimes == 0)
+                    if (visit.index < configs.Count && configs[visit.index].enable && configs[visit.index].ServerSpeedLog().ErrorContinuousTimes == 0)
                     {
                         uricache.Del(targetAddr);
                         return configs[visit.index];

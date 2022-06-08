@@ -1,85 +1,83 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Diagnostics;
-#if !_CONSOLE
-using SimpleJson;
-#endif
 using Shadowsocks.Controller;
 using System.Net;
-using System.Net.Sockets;
-using Shadowsocks.Encryption;
+
 
 namespace Shadowsocks.Model
 {
-    public class DnsBuffer
+	public class DnsBuffer
     {
-        public IPAddress ip;
-        public DateTime updateTime;
-        public string host;
-        public bool force_expired;
-         public bool isExpired(string host)
+        public IPAddress IP;
+        public string Host;
+        public DateTime UpdateTime;
+        public bool ForceExpired;
+	    
+        public bool IsExpired(string host)
         {
-            if (updateTime == null) return true;
-            if (this.host != host) return true;
-            if (force_expired && (DateTime.Now - updateTime).TotalMinutes > 1) return true;
-            return (DateTime.Now - updateTime).TotalMinutes > 30;
+            if (UpdateTime == null) return true;
+            if (this.Host != host) return true;
+            if (ForceExpired && (DateTime.Now - UpdateTime).TotalMinutes > 1) return true;
+            return (DateTime.Now - UpdateTime).TotalMinutes > 30;
         }
+        
         public void UpdateDns(string host, IPAddress ip)
         {
-            updateTime = DateTime.Now;
-            this.ip = new IPAddress(ip.GetAddressBytes());
-            this.host = host;
-            force_expired = false;
+            UpdateTime = DateTime.Now;
+            this.IP = new IPAddress(ip.GetAddressBytes());
+            this.Host = host;
+            ForceExpired = false;
         }
     }
 
+
+
+
     public class Connections
     {
-        private System.Collections.Generic.Dictionary<IHandler, Int32> sockets = new Dictionary<IHandler, int>();
+        public int Count => _sockets.Count;
+
+        private readonly Dictionary<IHandler, int> _sockets = new Dictionary<IHandler, int>();
+
+
         public bool AddRef(IHandler socket)
         {
             lock (this)
             {
-                if (sockets.ContainsKey(socket))
-                {
-                    sockets[socket] += 1;
-                }
+                if (_sockets.ContainsKey(socket))
+	                _sockets[socket] += 1;
                 else
-                {
-                    sockets[socket] = 1;
-                }
-                return true;
+	                _sockets[socket] = 1;
             }
+	        return true;
         }
+
+
         public bool DecRef(IHandler socket)
         {
             lock (this)
             {
-                if (sockets.ContainsKey(socket))
-                {
-                    sockets[socket] -= 1;
-                    if (sockets[socket] == 0)
-                    {
-                        sockets.Remove(socket);
-                    }
-                }
-                else
-                {
+                if (!_sockets.ContainsKey(socket))
                     return false;
-                }
+
+                _sockets[socket] -= 1;
+                if (_sockets[socket] <= 0)
+                    _sockets.Remove(socket);
                 return true;
             }
         }
+
+
         public void CloseAll()
         {
-            IHandler[] s;
+            IHandler[] handlers;
             lock (this)
             {
-                s = new IHandler[sockets.Count];
-                sockets.Keys.CopyTo(s, 0);
+                handlers = new IHandler[_sockets.Count];
+                _sockets.Keys.CopyTo(handlers, 0);
             }
-            foreach (IHandler handler in s)
+
+            foreach (var handler in handlers)
             {
                 try
                 {
@@ -87,16 +85,11 @@ namespace Shadowsocks.Model
                 }
                 catch
                 {
-
+                    // ignore
                 }
             }
         }
-        public int Count
-        {
-            get
-            {
-                return sockets.Count;
-            }
-        }
+
+
     }
 }

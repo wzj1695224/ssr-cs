@@ -178,6 +178,7 @@
     <Compile Include="Framework\Net\Extension.cs" />
     <Compile Include="Framework\Net\NetTool.cs" />
     <Compile Include="Framework\Util\ByteUtil.cs" />
+    <Compile Include="Framework\Util\CodeCleaner.cs" />
     <Compile Include="Framework\Windows\DPI.cs" />
     <Compile Include="Framework\Windows\Forms\Control\ControlHelper.cs" />
     <Compile Include="Framework\Windows\Forms\DataGridView\DataGridViewExtension.cs" />

@@ -45,6 +45,7 @@ namespace Shadowsocks.Controller
             timeBeginUpload = DateTime.Now;
         }
 
+
         public bool BeginDownload()
         {
             if (timeBeginDownload == new DateTime())
@@ -54,6 +55,7 @@ namespace Shadowsocks.Controller
             }
             return false;
         }
+
 
         public bool AddDownloadSize(int size)
         {

@@ -217,7 +217,7 @@ namespace Shadowsocks.View
                     new MenuItem("-"),
                     _servSameHostMenu,
                     new MenuItem("-"),
-                    CreateMenuItem("Server statistic...",         ShowServerLogItem_Click),
+                    CreateMenuItem("Server statistic",            ShowServerStatForm),
                     CreateMenuItem("Disconnect current",          DisconnectCurrent_Click),
                 }),
 
@@ -257,6 +257,16 @@ namespace Shadowsocks.View
 
                 CreateMenuItem("Quit", Quit_Click)
             });
+
+            // favorite menus
+            {
+                var menuTitle = new MenuItem("Favorite");
+                menuTitle.Enabled = false;
+                TrayIconMenu.MenuItems.Add(new MenuItem("-"));
+                TrayIconMenu.MenuItems.Add(menuTitle);
+
+                TrayIconMenu.MenuItems.Add(CreateMenuItem("Server statistic", ShowServerStatForm));
+            }
         }
 
 
@@ -979,11 +989,6 @@ namespace Shadowsocks.View
         private void ShowPortMapItem_Click(object sender, EventArgs e)
         {
             ShowPortMapForm();
-        }
-
-        private void ShowServerLogItem_Click(object sender, EventArgs e)
-        {
-            ShowServerStatForm();
         }
 
         private void SubscribeSetting_Click(object sender, EventArgs e)
