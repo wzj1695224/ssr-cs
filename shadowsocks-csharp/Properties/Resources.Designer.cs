@@ -95,6 +95,16 @@ namespace Shadowsocks.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
+        internal static byte[] FontAwesome6_Free_Solid_900 {
+            get {
+                object obj = ResourceManager.GetObject("FontAwesome6_Free_Solid_900", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
         internal static byte[] libsscrypto_dll {
             get {
                 object obj = ResourceManager.GetObject("libsscrypto_dll", resourceCulture);

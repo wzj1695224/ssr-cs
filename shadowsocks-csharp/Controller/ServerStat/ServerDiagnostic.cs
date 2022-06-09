@@ -7,12 +7,9 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
-using System.Runtime.CompilerServices;
 using System.Threading;
-using Microsoft.VisualBasic.Logging;
 
 
-[assembly: InternalsVisibleTo("test")]
 namespace Shadowsocks.Controller.ServerStat
 {
 	public class HostPingHistory

@@ -1,20 +1,17 @@
 ﻿using Shadowsocks.Controller;
+using Shadowsocks.Core;
+using Shadowsocks.Core.Model.Server;
+using Shadowsocks.Encryption;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.IO;
 using System.Text;
 using System.Windows.Forms;
-using System.Threading;
-using Shadowsocks.Core;
-using Shadowsocks.Core.Model;
-using Shadowsocks.Core.Model.Server;
-using Shadowsocks.Encryption;
 
 
 namespace Shadowsocks.Model
 {
-    public class UriVisitTime : IComparable
+	public class UriVisitTime : IComparable
     {
         public DateTime visitTime;
         public string uri;
@@ -737,6 +734,9 @@ namespace Shadowsocks.Model
         }
     }
 
+
+
+
     [Serializable]
     public class ServerTransferTotal
     {
@@ -745,6 +745,7 @@ namespace Shadowsocks.Model
         public Dictionary<string, object> servers = new Dictionary<string, object>();
         private int saveCounter;
         private DateTime saveTime;
+
 
         public static ServerTransferTotal Load()
         {

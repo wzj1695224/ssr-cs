@@ -147,6 +147,8 @@
     <Compile Include="Controller\ProxyAuth.cs" />
     <Compile Include="Controller\ServerStat\ServerDiagnostic.cs" />
     <Compile Include="Core\EventBus.cs" />
+    <Compile Include="Core\Fonts\FontAwesome.cs" />
+    <Compile Include="Core\Fonts\Fonts.cs" />
     <Compile Include="Core\Model\Server\Server.cs" />
     <Compile Include="Core\Model\Server\ServerFactory.cs" />
     <Compile Include="Core\ProxyMode.cs" />
@@ -174,6 +176,7 @@
     <Compile Include="Framework\Binding\LiveData.cs" />
     <Compile Include="Framework\Collections\CircularBuffer.cs" />
     <Compile Include="Framework\Extension\ObjectExtensions.cs" />
+    <Compile Include="Framework\Font\MemoryFonts.cs" />
     <Compile Include="Framework\Net\Diagnostic.cs" />
     <Compile Include="Framework\Net\Extension.cs" />
     <Compile Include="Framework\Net\NetTool.cs" />
@@ -209,6 +212,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <Compile Include="SystemX\Diagnostics\StackTrace\StackTraceExtension.cs" />
     <Compile Include="SystemX\Drawing\Color\ColorExtensions.cs" />
     <Compile Include="SystemX\Drawing\Color\ColorX.cs" />
     <Compile Include="Util\Base64.cs" />
@@ -233,11 +237,11 @@
     <Compile Include="View\InputPassword.Designer.cs">
       <DependentUpon>InputPassword.cs</DependentUpon>
     </Compile>
-    <Compile Include="View\LogForm.cs">
+    <Compile Include="View\Log\Form.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="View\LogForm.Designer.cs">
-      <DependentUpon>LogForm.cs</DependentUpon>
+    <Compile Include="View\Log\Form.Designer.cs">
+      <DependentUpon>Form.cs</DependentUpon>
     </Compile>
     <Compile Include="View\MenuViewController.cs" />
     <Compile Include="View\PortSettingsForm.cs">
@@ -300,8 +304,8 @@
     <EmbeddedResource Include="View\InputPassword.resx">
       <DependentUpon>InputPassword.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="View\LogForm.resx">
-      <DependentUpon>LogForm.cs</DependentUpon>
+    <EmbeddedResource Include="View\Log\Form.resx">
+      <DependentUpon>Form.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="View\PortSettingsForm.resx">
       <DependentUpon>PortSettingsForm.cs</DependentUpon>

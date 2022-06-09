@@ -8,6 +8,7 @@ using System.Linq;
 using System.Net.NetworkInformation;
 using System.Windows.Forms;
 using Shadowsocks.Controller.ServerStat;
+using Shadowsocks.Core.Fonts;
 using static System.Int32;
 using static Shadowsocks.Framework.Util.ByteUnit;
 using static Shadowsocks.Framework.Util.ByteUtil;
@@ -220,20 +221,26 @@ namespace Shadowsocks.View.ServerStat
 						case PingState.NotPing:
 							SetCellText(cell, "-");
 							SetCellBackColor(cell, Color.White);
+							cell.Style.Font = _fontAwesomeFont;
 							break;
 						case PingState.Pinging:
-							SetCellText(cell, "📞");
+							// SetCellText(cell, "📞");
+							SetCellText(cell, FontAwesomeIcons.Wifi);
 							SetCellBackColor(cell, Color.DeepSkyBlue);
+							cell.Style.Font = _fontAwesomeFont;
 							break;
 						case PingState.Timeout:
-							SetCellText(cell, "🚫");
+							// SetCellText(cell, "🚫");
+							SetCellText(cell, FontAwesomeIcons.Ban);
 							SetCellBackColor(cell, Color.Red);
+							cell.Style.Font = _fontAwesomeFont;
 							break;
 						case PingState.Complete:
 							var pingTime = cellState.Time;
 							var color = GetLevelColor(pingTime, PingLevelTime, PingLevelColors);
 							SetCellBackColor(cell, color);
 							SetCellText(cell, pingTime);
+							cell.Style.Font = DefaultFont;
 							break;
 						default:
 							throw new ArgumentOutOfRangeException();

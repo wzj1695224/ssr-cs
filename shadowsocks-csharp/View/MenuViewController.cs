@@ -1,7 +1,10 @@
 ﻿using Shadowsocks.Controller;
+using Shadowsocks.Controller.ServerStat;
 using Shadowsocks.Core;
 using Shadowsocks.Core.Model.Server;
 using Shadowsocks.Model;
+using Shadowsocks.View.Log;
+using Shadowsocks.View.ServerStat;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -10,8 +13,6 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
-using Shadowsocks.Controller.ServerStat;
-using Shadowsocks.View.ServerStat;
 using ZXing;
 using ZXing.Common;
 using ZXing.QrCode;
@@ -20,7 +21,7 @@ using static Shadowsocks.Framework.Windows.Forms.Menu.MenuFactory;
 
 namespace Shadowsocks.View
 {
-    public class EventParams
+	public class EventParams
     {
         public object sender;
         public EventArgs e;
@@ -69,12 +70,13 @@ namespace Shadowsocks.View
         private MenuItem _doUpdateMenu;
         #endregion
 
+        private ServerStatForm    _serverStatForm;
+        private LogForm           _logForm;
+
         private ConfigForm configForm;
         private SettingsForm settingsForm;
-        private ServerStatForm _serverStatForm;
         private PortSettingsForm portMapForm;
         private SubscribeForm subScribeForm;
-        private LogForm logForm;
         private string _urlToOpen;
         private System.Timers.Timer timerDelayCheckUpdate;
 
@@ -244,7 +246,7 @@ namespace Shadowsocks.View
 
                 CreateMenuGroup("Help", new[] {
                     CreateMenuItem("Check update",         CheckUpdate_Click),
-                    CreateMenuItem("Show logs...",         ShowLogItem_Click),
+                    CreateMenuItem("Show logs...",         ShowLogForm),
                     CreateMenuItem("Open wiki...",         OpenWiki_Click),
                     CreateMenuItem("Feedback...",          FeedbackItem_Click),
                     new MenuItem("-"),
@@ -733,6 +735,7 @@ namespace Shadowsocks.View
             }
         }
 
+
         private void ShowServerStatForm()
         {
             if (_serverStatForm != null)
@@ -754,26 +757,26 @@ namespace Shadowsocks.View
             }
         }
 
-        private void ShowGlobalLogForm()
+
+        private void ShowLogForm()
         {
-            if (logForm != null)
+            if (_logForm != null)
             {
-                logForm.Activate();
-                logForm.Update();
-                if (logForm.WindowState == FormWindowState.Minimized)
-                {
-                    logForm.WindowState = FormWindowState.Normal;
-                }
+                _logForm.Activate();
+                _logForm.Update();
+                if (_logForm.WindowState == FormWindowState.Minimized)
+	                _logForm.WindowState = FormWindowState.Normal;
             }
             else
             {
-                logForm = new LogForm(controller);
-                logForm.Show();
-                logForm.Activate();
-                logForm.BringToFront();
-                logForm.FormClosed += globalLogForm_FormClosed;
+                _logForm = new LogForm(controller);
+                _logForm.Show();
+                _logForm.Activate();
+                _logForm.BringToFront();
+                _logForm.FormClosed += globalLogForm_FormClosed;
             }
         }
+
 
         private void ShowSubscribeSettingForm()
         {
@@ -831,7 +834,7 @@ namespace Shadowsocks.View
 
         void globalLogForm_FormClosed(object sender, FormClosedEventArgs e)
         {
-            logForm = null;
+            _logForm = null;
             Util.Utils.ReleaseMemory();
         }
 
@@ -979,11 +982,6 @@ namespace Shadowsocks.View
         private void CheckUpdate_Click(object sender, EventArgs e)
         {
             updateChecker.CheckUpdate(controller.GetCurrentConfiguration());
-        }
-
-        private void ShowLogItem_Click(object sender, EventArgs e)
-        {
-            ShowGlobalLogForm();
         }
 
         private void ShowPortMapItem_Click(object sender, EventArgs e)

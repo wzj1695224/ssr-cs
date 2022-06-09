@@ -1,15 +1,18 @@
 ﻿using System;
 
+
 namespace Shadowsocks.Obfs
 {
     public class ObfsException : Exception
     {
         public ObfsException(string info)
             : base(info)
-        {
-
-        }
+        {}
     }
+
+
+
+
     public class ServerInfo
     {
         public string host;
@@ -44,6 +47,10 @@ namespace Shadowsocks.Obfs
             this.iv = iv;
         }
     }
+
+
+
+
     public interface IObfs : IDisposable
     {
         string Name();

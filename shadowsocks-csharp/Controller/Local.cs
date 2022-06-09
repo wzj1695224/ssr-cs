@@ -4,10 +4,12 @@ using Shadowsocks.Obfs;
 using Shadowsocks.Util;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Timers;
+using Shadowsocks.SystemX.Diagnostics;
 using static Shadowsocks.Framework.Util.CodeCleaner;
 
 
@@ -158,8 +160,10 @@ namespace Shadowsocks.Controller
         }
     }
 
-    class Handler
-        : IHandler
+
+
+
+    class Handler : IHandler
     {
         private delegate IPHostEntry GetHostEntryHandler(string ip);
 
@@ -167,7 +171,7 @@ namespace Shadowsocks.Controller
         public delegate void KeepCurrentServer(int localPort, string targetURI, string id);
         public GetCurrentServer getCurrentServer;
         public KeepCurrentServer keepCurrentServer;
-        public Server server;
+        public Server @server;
         public ServerSelectStrategy.FilterFunc select_server;
         public HandlerConfig cfg = new HandlerConfig();
         // Connection socket
@@ -352,127 +356,8 @@ namespace Shadowsocks.Controller
             speedTester.transfer = transfer;
         }
 
-        public int LogSocketException(Exception e)
-        {
-            // just log useful exceptions, not all of them
-            Server s = server;
-            if (e is ObfsException)
-            {
-                ObfsException oe = (ObfsException)e;
-                if (lastErrCode == 0)
-                {
-                    if (s != null)
-                    {
-                        lastErrCode = 16;
-                        s.ServerSpeedLog().AddErrorDecodeTimes();
-                    }
-                }
-                return 16; // ObfsException(decrypt error)
-            }
-            else if (e is ProtocolException)
-            {
-                ProtocolException pe = (ProtocolException)e;
-                if (lastErrCode == 0)
-                {
-                    if (s != null)
-                    {
-                        lastErrCode = 16;
-                        s.ServerSpeedLog().AddErrorDecodeTimes();
-                    }
-                }
-                return 16; // ObfsException(decrypt error)
-            }
-            else if (e is SocketException)
-            {
-                SocketException se = (SocketException)e;
-                if (se.SocketErrorCode == SocketError.ConnectionAborted
-                    || se.SocketErrorCode == SocketError.ConnectionReset
-                    || se.SocketErrorCode == SocketError.NotConnected
-                    || se.SocketErrorCode == SocketError.Interrupted
-                    || se.SocketErrorCode == SocketError.Shutdown
-                    )
-                {
-                    // closed by browser when sending
-                    // normally happens when download is canceled or a tab is closed before page is loaded
-                }
-                else if (se.ErrorCode == 11004)
-                {
-                    if (lastErrCode == 0)
-                    {
-                        if (s != null)
-                        {
-                            lastErrCode = 1;
-                            s.ServerSpeedLog().AddErrorTimes();
-                        }
-                    }
-                    return 1; // proxy DNS error
-                }
-                else if (se.SocketErrorCode == SocketError.HostNotFound)
-                {
-                    if (lastErrCode == 0)
-                    {
-                        if (s != null)
-                        {
-                            lastErrCode = 2;
-                            s.ServerSpeedLog().AddErrorTimes();
-                            if (s.ServerSpeedLog().ErrorConnectTimes >= 3 && cfg.autoSwitchOff)
-                            {
-                                s.enable = false;
-                            }
-                        }
-                    }
-                    return 2; // ip not exist
-                }
-                else if (se.SocketErrorCode == SocketError.ConnectionRefused)
-                {
-                    if (lastErrCode == 0)
-                    {
-                        if (s != null)
-                        {
-                            lastErrCode = 1;
-                            if (cfg != null && cfg.socks5RemotePort == 0)
-                                s.ServerSpeedLog().AddErrorTimes();
-                        }
-                    }
-                    return 2; // proxy ip/port error
-                }
-                else if (se.SocketErrorCode == SocketError.NetworkUnreachable)
-                {
-                    if (lastErrCode == 0)
-                    {
-                        if (s != null)
-                        {
-                            lastErrCode = 3;
-                            //s.ServerSpeedLog().AddErrorTimes();
-                        }
-                    }
-                    return 3; // proxy ip/port error
-                }
-                else if (se.SocketErrorCode == SocketError.TimedOut)
-                {
-                    if (lastErrCode == 0)
-                    {
-                        if (s != null)
-                        {
-                            lastErrCode = 8;
-                            s.ServerSpeedLog().AddTimeoutTimes();
-                        }
-                    }
-                    return 8; // proxy server no response too slow
-                }
-                else
-                {
-                    if (lastErrCode == 0)
-                    {
-                        lastErrCode = -1;
-                        if (s != null)
-                            s.ServerSpeedLog().AddNoErrorTimes(); //?
-                    }
-                    return -1;
-                }
-            }
-            return 0;
-        }
+
+
 
         public bool ReConnect()
         {
@@ -1000,7 +885,7 @@ namespace Shadowsocks.Controller
             }
             catch (Exception e)
             {
-                LogException(e);
+                HandleException(e);
                 Close();
             }
         }
@@ -1028,15 +913,15 @@ namespace Shadowsocks.Controller
                 }
                 speedTester.EndConnect();
 
-                ConnectState _state = this.State;
-                if (_state == ConnectState.CONNECTING)
+                var state = this.State;
+                if (state == ConnectState.CONNECTING)
                 {
                     StartPipe();
                 }
             }
             catch (Exception e)
             {
-                LogExceptionAndClose(e);
+                HandleExceptionAndClose(e);
             }
         }
 
@@ -1300,7 +1185,7 @@ namespace Shadowsocks.Controller
             }
             catch (Exception e)
             {
-                LogExceptionAndClose(e);
+                HandleExceptionAndClose(e);
             }
         }
 
@@ -1357,29 +1242,30 @@ namespace Shadowsocks.Controller
             }
         }
 
+
+
+
         private void PipeRemoteReceiveCallback(IAsyncResult ar)
         {
-            bool final_close = false;
+            if (closed) return;
+            var toCloseSocket = false;
+
             try
             {
-                if (closed)
-                {
-                    return;
-                }
-                int bytesRead = endRemoteTCPRecv(ar);
+                var bytesRead = endRemoteTCPRecv(ar);
 
                 if (remote.IsClose)
                 {
-                    final_close = true;
+                    toCloseSocket = true;
                 }
                 else
                 {
-                    int bytesRecv = remote.GetAsyncResultSize(ar);
-                    if (speedTester.BeginDownload())
+                    var bytesRecv = remote.GetAsyncResultSize(ar);
+                    speedTester.BeginDownload();
                     {
-                        int pingTime = -1;
-                        if (speedTester.timeBeginDownload != null && speedTester.timeBeginUpload != null)
-                            pingTime = (int)(speedTester.timeBeginDownload - speedTester.timeBeginUpload).TotalMilliseconds;
+                        var pingTime = -1;
+                        if (speedTester.DownloadBegin != null && speedTester.UploadBegin != null)
+                            pingTime = (int)(speedTester.DownloadBegin - speedTester.UploadBegin).TotalMilliseconds;
                         if (pingTime >= 0)
                             server.ServerSpeedLog().AddConnectTime(pingTime);
                     }
@@ -1388,7 +1274,7 @@ namespace Shadowsocks.Controller
                     speedTester.AddProtocolRecvSize(remote.GetAsyncProtocolSize(ar));
                     if (bytesRead > 0)
                     {
-                        byte[] remoteSendBuffer = new byte[BufferSize];
+                        var remoteSendBuffer = new byte[BufferSize];
 
                         Array.Copy(remote.GetAsyncResultBuffer(ar), remoteSendBuffer, bytesRead);
                         if (connectionUDP == null)
@@ -1427,15 +1313,13 @@ namespace Shadowsocks.Controller
             }
             catch (Exception e)
             {
-                LogException(e);
-                final_close = true;
+                HandleException(e);
+                toCloseSocket = true;
             }
             finally
             {
-                if (final_close)
-                {
-                    Close();
-                }
+                if (toCloseSocket)
+	                Close();
             }
         }
 
@@ -1462,12 +1346,12 @@ namespace Shadowsocks.Controller
                     }
                     if (closed)
 	                    break;
-                    
-                    if (speedTester.BeginDownload())
+
+                    speedTester.BeginDownload();
                     {
                         var pingTime = -1;
-                        if (speedTester.timeBeginDownload != null && speedTester.timeBeginUpload != null)
-                            pingTime = (int)(speedTester.timeBeginDownload - speedTester.timeBeginUpload).TotalMilliseconds;
+                        if (speedTester.DownloadBegin != null && speedTester.UploadBegin != null)
+                            pingTime = (int)(speedTester.DownloadBegin - speedTester.UploadBegin).TotalMilliseconds;
                         if (pingTime >= 0)
                             server.ServerSpeedLog().AddConnectTime(pingTime);
                     }
@@ -1524,7 +1408,7 @@ namespace Shadowsocks.Controller
                 }
                 catch (Exception e)
                 {
-                    LogException(e);
+                    HandleException(e);
                     final_close = true;
                     break;
                 }
@@ -1558,11 +1442,11 @@ namespace Shadowsocks.Controller
                 else
                 {
                     int bytesRecv = remoteUDP.GetAsyncResultSize(ar);
-                    if (speedTester.BeginDownload())
+                    speedTester.BeginDownload();
                     {
                         int pingTime = -1;
-                        if (speedTester.timeBeginDownload != null && speedTester.timeBeginUpload != null)
-                            pingTime = (int)(speedTester.timeBeginDownload - speedTester.timeBeginUpload).TotalMilliseconds;
+                        if (speedTester.DownloadBegin != null && speedTester.UploadBegin != null)
+                            pingTime = (int)(speedTester.DownloadBegin - speedTester.UploadBegin).TotalMilliseconds;
                         if (pingTime >= 0)
                             server.ServerSpeedLog().AddConnectTime(pingTime);
                     }
@@ -1584,7 +1468,7 @@ namespace Shadowsocks.Controller
             }
             catch (Exception e)
             {
-                LogException(e);
+                HandleException(e);
                 final_close = true;
             }
             finally
@@ -1713,7 +1597,7 @@ namespace Shadowsocks.Controller
             catch (Exception e)
             {
                 local_error = true;
-                LogException(e);
+                HandleException(e);
                 final_close = true;
             }
             finally
@@ -1766,7 +1650,7 @@ namespace Shadowsocks.Controller
             }
             catch (Exception e)
             {
-                LogException(e);
+                HandleException(e);
                 final_close = true;
             }
             finally
@@ -1791,7 +1675,7 @@ namespace Shadowsocks.Controller
             }
             catch (Exception e)
             {
-                LogExceptionAndClose(e);
+                HandleExceptionAndClose(e);
             }
         }
 
@@ -1807,7 +1691,7 @@ namespace Shadowsocks.Controller
             }
             catch (Exception e)
             {
-                LogExceptionAndClose(e);
+                HandleExceptionAndClose(e);
             }
         }
 
@@ -1825,36 +1709,115 @@ namespace Shadowsocks.Controller
             }
             catch (Exception e)
             {
-                LogExceptionAndClose(e);
+                HandleExceptionAndClose(e);
             }
         }
 
-        protected string getServerUrl(out string remarks)
+        
+
+
+        private int SetLastErrCode(int err)
         {
-            Server s = server;
-            if (s == null)
-            {
-                remarks = "";
-                return "";
-            }
-            remarks = s.remarks;
-            return s.server;
+            if (lastErrCode == 0)
+                lastErrCode = err;
+            return err;
         }
 
-        private void LogException(Exception e)
-        {
-            int err = LogSocketException(e);
-            string remarks;
-            string server_url = getServerUrl(out remarks);
-            if (err != 0 && !Logging.LogSocketException(remarks, server_url, e))
-                Logging.LogUsefulException(e);
-        }
 
-        private void LogExceptionAndClose(Exception e)
+
+
+        private void HandleExceptionAndClose(Exception e)
         {
-            LogException(e);
+            HandleException(e);
             Close();
         }
+
+
+        private int HandleException(Exception e)
+        {
+            switch (e)
+	        {
+		        case ObfsException _:
+					Logging.Error($"Proxy server [{server?.remarks}({server?.server})]  {e.Message}");
+                    server?.ServerSpeedLog().AddErrorDecodeTimes();
+                    return SetLastErrCode(16);  // ObfsException(decrypt error)
+
+                case ProtocolException _:
+                    server?.ServerSpeedLog().AddErrorDecodeTimes();
+                    return SetLastErrCode(16);  // ObfsException(decrypt error)
+
+                case SocketException se:
+			        return HandleSocketException(se);
+
+                case NullReferenceException _:
+                case ObjectDisposedException _:
+                    // ignore
+                    return -1;
+	        }
+
+            Logging.LogUsefulException(e);
+            return 0;
+        }
+
+
+        private int HandleSocketException(SocketException e)
+        {
+	        var s = server;
+
+            // proxy DNS error
+            if (e.ErrorCode == 11004)
+	        {
+                Logging.Warn($"Proxy server [{server?.remarks}({server?.server})]  DNS lookup failed");
+                s?.ServerSpeedLog().AddErrorTimes();
+                return SetLastErrCode(1);
+            }
+
+            // already closed
+            if ((uint)e.SocketErrorCode == 0x80004005)
+	            return -1;
+
+            switch (e.SocketErrorCode)
+	        {
+		        case SocketError.ConnectionAborted:
+		        case SocketError.ConnectionReset:
+		        case SocketError.NotConnected:
+		        case SocketError.Interrupted:
+		        case SocketError.Shutdown:
+			        // closed by browser when sending
+			        // normally happens when download is canceled or a tab is closed before page is loaded
+			        return -1;
+
+		        case SocketError.HostNotFound:
+					Logging.Warn($"Proxy server [{server?.remarks}({server?.server})]  Host not found");
+                    s?.ServerSpeedLog().AddErrorTimes();
+                    if (s?.ServerSpeedLog().ErrorConnectTimes >= 3 && cfg.autoSwitchOff)
+                        s.enable = false;
+                    return SetLastErrCode(2); // ip not exist
+
+		        case SocketError.ConnectionRefused:
+					Logging.Warn($"Proxy server [{server?.remarks}({server?.server})]  connection refused");
+                    if (cfg != null && cfg.socks5RemotePort == 0)
+                        s?.ServerSpeedLog().AddErrorTimes();
+                    return SetLastErrCode(2); // proxy ip/port error
+
+		        case SocketError.NetworkUnreachable:
+					Logging.Warn($"Proxy server [{server?.remarks}({server?.server})]  network unreachable");
+                    //s?.ServerSpeedLog().AddErrorTimes();
+                    return SetLastErrCode(3); // proxy ip/port error
+
+		        case SocketError.TimedOut:
+					// Logging.Warn($"Proxy server [{server?.remarks}({server?.server})]  connection timeout");
+                    s?.ServerSpeedLog().AddTimeoutTimes();
+                    return SetLastErrCode(8); // proxy server no response too slow
+	        }
+
+            // unexpected
+            Logging.Info($"Proxy server [{server?.remarks}({server?.server})]  {e.SocketErrorCode} : " + e.Message);
+            Logging.Debug(new StackTrace().GetFramesString()); ;
+            server?.ServerSpeedLog().AddNoErrorTimes();
+            return SetLastErrCode(-1);
+        }
+
     }
 
 }

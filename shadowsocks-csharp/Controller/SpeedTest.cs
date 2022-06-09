@@ -1,13 +1,12 @@
-﻿using System;
+﻿using Shadowsocks.Model;
+using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Text;
-using Shadowsocks.Model;
+
 
 namespace Shadowsocks.Controller
 {
 
-    class SpeedTester
+	class SpeedTester
     {
 #if DEBUG
         struct TransLog
@@ -16,10 +15,11 @@ namespace Shadowsocks.Controller
             public int size;
         }
 #endif
-        public DateTime timeConnectBegin;
-        public DateTime timeConnectEnd;
-        public DateTime timeBeginUpload;
-        public DateTime timeBeginDownload;
+        public DateTime ConnectBegin;
+        public DateTime ConnectEnd;
+        public DateTime UploadBegin;
+        public DateTime DownloadBegin;
+
         public long sizeUpload = 0;
         public long sizeDownload = 0;
         public long sizeProtocolRecv = 0;
@@ -30,30 +30,27 @@ namespace Shadowsocks.Controller
         public int upload_cnt = 0;
         public int download_cnt = 0;
 
+
         public void BeginConnect()
         {
-            timeConnectBegin = DateTime.Now;
+            ConnectBegin = DateTime.Now;
         }
 
         public void EndConnect()
         {
-            timeConnectEnd = DateTime.Now;
+            ConnectEnd = DateTime.Now;
         }
+
 
         public void BeginUpload()
         {
-            timeBeginUpload = DateTime.Now;
+            UploadBegin = DateTime.Now;
         }
 
 
-        public bool BeginDownload()
+        public void BeginDownload()
         {
-            if (timeBeginDownload == new DateTime())
-            {
-                timeBeginDownload = DateTime.Now;
-                return true;
-            }
-            return false;
+	        DownloadBegin = DateTime.Now;
         }
 
 
@@ -80,7 +77,7 @@ namespace Shadowsocks.Controller
             }
 #endif
             return download_cnt > 30;
-            //return sizeDownload > 1024 * 256 && sizeDownload > (DateTime.Now - timeConnectEnd).TotalSeconds * 1024 * 16;
+            //return sizeDownload > 1024 * 256 && sizeDownload > (DateTime.Now - ConnectEnd).TotalSeconds * 1024 * 16;
         }
         public void AddProtocolRecvSize(int size)
         {
@@ -111,7 +108,7 @@ namespace Shadowsocks.Controller
             }
 #endif
             return upload_cnt > 30;
-            //return sizeUpload > 1024 * 256 && sizeUpload > (DateTime.Now - timeConnectEnd).TotalSeconds * 1024 * 16;
+            //return sizeUpload > 1024 * 256 && sizeUpload > (DateTime.Now - ConnectEnd).TotalSeconds * 1024 * 16;
         }
 
         public string TransferLog()
@@ -132,6 +129,9 @@ namespace Shadowsocks.Controller
             return ret;
         }
     }
+
+
+
 
     class ProtocolResponseDetector
     {

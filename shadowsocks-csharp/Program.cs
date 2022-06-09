@@ -84,10 +84,6 @@ namespace Shadowsocks
                 Configuration cfg = _controller.GetConfiguration();
                 Logging.save_to_file = cfg.logEnable;
 
-                //#if !DEBUG
-                Logging.OpenLogFile();
-                //#endif
-
 #if _DOTNET_4_0
                 // Enable Modern TLS when .NET 4.5+ installed.
                 if (Util.EnvCheck.CheckDotNet45())

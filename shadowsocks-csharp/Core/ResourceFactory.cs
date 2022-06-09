@@ -107,13 +107,13 @@ namespace Shadowsocks.Core
 
 			if (!needTransformation)
 				return CreateTrayIcon();
-			else
-				return CreateTrayIcon((color) => Color.FromArgb(
-					(byte)(color.A * mulA),
-					(byte)(color.R * mulR),
-					(byte)(color.G * mulG),
-					(byte)(color.B * mulB))
-				);
+
+			return CreateTrayIcon(color => Color.FromArgb(
+				(byte)(color.A * mulA),
+				(byte)(color.R * mulR),
+				(byte)(color.G * mulG),
+				(byte)(color.B * mulB))
+			);
 		}
 
 	}

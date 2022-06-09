@@ -9,9 +9,14 @@ namespace Shadowsocks.View.ServerStat
 {
 	public partial class ServerStatForm
 	{
+		// ReSharper disable once InconsistentNaming
+		private ServerDataGridColumns Column;
+
 
 		private void SetupServerDataGrid()
 		{
+			Column = new ServerDataGridColumns(ServerDataGrid);
+
 			var mul = DPI.DpiMul;
 
 			foreach (DataGridViewColumn column in ServerDataGrid.Columns)
@@ -23,12 +28,38 @@ namespace Shadowsocks.View.ServerStat
 				column.Width = column.Width * mul / 4;
 			}
 
+			// TODO change font
+			// var font = Fonts.FontAwesome(8);
+			// Column.DoForAll(col => col.HeaderCell.Style.Font = font);
+			// ServerDataGrid.Columns[9].HeaderText = FontAwesomeIcons.ArrowDownLong + " Avg";
+
 			ServerDataGrid.RowTemplate.Height = 20 * mul / 4;
 		}
 
 
 
 
+
+
+
+
+		private class ServerDataGridColumns
+		{
+			public DataGridViewColumn Id => _serverDataGrid.Columns[0];
+
+			private readonly DataGridView _serverDataGrid;
+
+			public ServerDataGridColumns(DataGridView serverDataGrid)
+			{
+				_serverDataGrid = serverDataGrid;
+			}
+
+			public void DoForAll(Action<DataGridViewColumn> action)
+			{
+				foreach (DataGridViewColumn column in _serverDataGrid.Columns)
+					action(column);
+			}
+		}
 
 
 

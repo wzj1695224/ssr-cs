@@ -1,4 +1,4 @@
-﻿using Shadowsocks.Obfs;
+﻿using Shadowsocks.SystemX.Diagnostics;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -8,7 +8,7 @@ using System.Text;
 
 namespace Shadowsocks.Controller
 {
-    public enum LogLevel
+	public enum LogLevel
     {
         Debug = 0,
         Info,
@@ -22,7 +22,7 @@ namespace Shadowsocks.Controller
 
     internal class Logger
     {
-	    private readonly string[] LevelStr = new[]
+	    internal static readonly string[] LevelStr = new[]
         {
             "Debug",
             "Info",
@@ -69,17 +69,18 @@ namespace Shadowsocks.Controller
     {
         public override Encoding Encoding { get; }
 
-        private readonly string _dir;
-        private readonly string _name;
+        private readonly string   _dir;
+        private readonly string   _name;
 
-        private FileStream   _file         = null;
-        private StreamWriter _fileWritter  = null;
-        private DateTime?    _fileDate     = null;
-        private object       _fileLock     = new object();
+        private FileStream        _file         = null;
+        private StreamWriter      _fileWriter   = null;
+        private DateTime?         _fileDate     = null;
+        private readonly object   _fileLock     = new object();
 
 
         public DateFileWriter(string dir, string name)
         {
+            _dir = dir;
             _name = name;
         }
         
@@ -88,20 +89,20 @@ namespace Shadowsocks.Controller
         {
 	        var today = DateTime.Today;
 	        if (_fileDate == today)
-                return _fileWritter;
+                return _fileWriter;
 
             lock (_fileLock)
             {
                 if (_fileDate == today)
-                    return _fileWritter;
+                    return _fileWriter;
                 
                 var filename = $"{_name}_{today:yyyy-MM-dd}.log";
                 _fileDate = today;
                 _file = CreateFIleStream(_dir, filename);
-                _fileWritter = new StreamWriter(_file);
+                _fileWriter = new StreamWriter(_file);
             }
 
-            return _fileWritter;
+            return _fileWriter;
         }
 
         private FileStream CreateFIleStream(string dir, string filename)
@@ -146,95 +147,45 @@ namespace Shadowsocks.Controller
 
     public class Logging
     {
-        public static string LogFile;
-        public static string LogFilePath;
-        public static string LogFileName;
-        protected static string date;
+        public delegate void OnLog(string msg);
 
-        private static FileStream _logFileStream;
-        private static StreamWriterWithTimestamp _logStreamWriter;
+        public static string        LogFilePath;
+        public static string        LogFileName;
+        public static DateTime      LogFileDate;
+
+        public static event OnLog   LogListener;
+
+        private static FileStream   _logFileStream;
+        private static StreamWriter _logStreamWriter;
+
         private static object _lock = new object();
         public static bool save_to_file = true;
 
 
-        public static bool OpenLogFile()
-        {
-            try
-            {
-                CloseLogFile();
-
-                if (save_to_file)
-                {
-                    var dir = Path.Combine(System.Windows.Forms.Application.StartupPath, @"temp");// Path.GetFullPath(".");//Path.GetTempPath();
-                    if (!Directory.Exists(dir))
-	                    Directory.CreateDirectory(dir);
-                    
-                    var new_date = DateTime.Now.ToString("yyyy-MM");
-                    LogFileName = "shadowsocks_" + new_date + ".log";
-                    LogFile = Path.Combine(dir, LogFileName);
-                    _logFileStream = new FileStream(LogFile, FileMode.Append);
-                    _logStreamWriter = new StreamWriterWithTimestamp(_logFileStream);
-                    _logStreamWriter.AutoFlush = true;
-                    Console.SetOut(_logStreamWriter);
-                    Console.SetError(_logStreamWriter);
-
-                    LogFilePath = dir;
-                    date = new_date;
-                }
-                else
-                {
-                    Console.SetOut(Console.Out);
-                    Console.SetError(Console.Error);
-                }
-
-                return true;
-            }
-            catch (IOException e)
-            {
-                Console.WriteLine(e.ToString());
-                return false;
-            }
-        }
-
-
-        private static void CloseLogFile()
-        {
-            _logStreamWriter?.Dispose();
-            _logFileStream?.Dispose();
-
-            _logStreamWriter = null;
-            _logFileStream = null;
-        }
-
-
-        public static void Clear()
-        {
-            CloseLogFile();
-            if (LogFile != null)
-            {
-                File.Delete(LogFile);
-            }
-            OpenLogFile();
-        }
 
 
         public static void Log(LogLevel level, object s)
         {
-            UpdateLogFile();
-            var strMap = new[]{
-                "Debug",
-                "Info",
-                "Warn",
-                "Error",
-                "Assert",
-            };
-            Console.WriteLine($@"[{strMap[(int)level]}] {s}");
+            RefreshOutput();
+
+            var time = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+            var lv = Logger.LevelStr[(int)level][0];
+            var msg = $@"{time}  {lv}  {s}";
+
+            Console.WriteLine(msg);
+            LogListener?.Invoke(msg);
         }
 
         public static void Error(object o)
         {
             Log(LogLevel.Error, o);
             System.Diagnostics.Debug.WriteLine($@"[{DateTime.Now}] ERROR {o}");
+        }
+
+        public static void Warn(object o)
+        {
+            Log(LogLevel.Error, o);
+            System.Diagnostics.Debug.WriteLine($@"[{DateTime.Now}] WARN  {o}");
         }
 
         public static void Info(object o)
@@ -250,153 +201,113 @@ namespace Shadowsocks.Controller
             System.Diagnostics.Debug.WriteLine($@"[{DateTime.Now}] DEBUG {o}");
         }
 
-        private static string ToString(StackFrame[] stacks)
+
+
+
+        protected static void RefreshOutput()
         {
-            string result = string.Empty;
-            foreach (StackFrame stack in stacks)
+            if (!save_to_file)
             {
-                result += string.Format("{0}\r\n", stack.GetMethod().ToString());
+                Console.SetOut(Console.Out);
+                Console.SetError(Console.Error);
+                return;
             }
-            return result;
+
+	        var today = DateTime.Today;
+	        if (today == LogFileDate) return;
+
+            lock (_lock)
+            {
+                if (today != LogFileDate)
+                    ReopenLogFile();
+            }
         }
 
-        protected static void UpdateLogFile()
+
+        private static void ReopenLogFile()
         {
-            if (DateTime.Now.ToString("yyyy-MM") != date)
+            try
             {
-                lock (_lock)
-                {
-                    if (DateTime.Now.ToString("yyyy-MM") != date)
-                    {
-                        OpenLogFile();
-                    }
-                }
+                CloseLogFile();
+
+                var dir = Path.Combine(System.Windows.Forms.Application.StartupPath, @"logs");
+                if (!Directory.Exists(dir))
+                    Directory.CreateDirectory(dir);
+
+                var today = DateTime.Today;
+                var filename = $"shadowsocks_{today:yyyy-MM-dd}.log";
+                var filepath = Path.Combine(dir, filename);
+
+                var fs = new FileStream(filepath, FileMode.Append);
+                var writer = new StreamWriter(fs);
+                writer.AutoFlush = true;
+                Console.SetOut(writer);
+                Console.SetError(writer);
+
+                LogFilePath = filepath;
+                LogFileName = filename;
+                LogFileDate = today;
+                _logFileStream = fs;
+                _logStreamWriter = writer;
+            }
+            catch (IOException e)
+            {
+                Console.WriteLine(e.ToString());
             }
         }
+
+
+        private static void CloseLogFile()
+        {
+            _logStreamWriter?.Dispose();
+            _logStreamWriter = null;
+
+            _logFileStream?.Dispose();
+            _logFileStream = null;
+        }
+
+
+        public static void Clear()
+        {
+            CloseLogFile();
+            if (LogFilePath != null)
+	            File.Delete(LogFilePath);
+        }
+
 
         public static void LogUsefulException(Exception e)
         {
-            UpdateLogFile();
             // just log useful exceptions, not all of them
-            if (e is SocketException)
+            if (e is SocketException se)
             {
-                SocketException se = (SocketException)e;
-                if (se.SocketErrorCode == SocketError.ConnectionAborted)
-                {
-                    // closed by browser when sending
-                    // normally happens when download is canceled or a tab is closed before page is loaded
-                }
-                else if (se.SocketErrorCode == SocketError.ConnectionReset)
-                {
-                    // received rst
-                }
-                else if (se.SocketErrorCode == SocketError.NotConnected)
-                {
-                    // close when not connected
-                }
-                else if ((uint)se.SocketErrorCode == 0x80004005)
-                {
-                    // already closed
-                }
-                else if (se.SocketErrorCode == SocketError.Shutdown)
-                {
-                    // ignore
-                }
-                else if (se.SocketErrorCode == SocketError.Interrupted)
-                {
-                    // ignore
-                }
-                else
-                {
-                    Error(e);
-
-                    Debug(ToString(new StackTrace().GetFrames()));
-                }
-            }
-            else
-            {
-                Error(e);
-
-                Debug(ToString(new StackTrace().GetFrames()));
-            }
-        }
-
-
-        public static bool LogSocketException(string remarks, string server, Exception e)
-        {
-            UpdateLogFile();
-            // just log useful exceptions, not all of them
-            if (e is ObfsException)
-            {
-                ObfsException oe = (ObfsException)e;
-                Error("Proxy server [" + remarks + "(" + server + ")] "
-                    + oe.Message);
-                return true;
-            }
-            else if (e is NullReferenceException)
-            {
-                return true;
-            }
-            else if (e is ObjectDisposedException)
-            {
-                // ignore
-                return true;
-            }
-            else if (e is SocketException)
-            {
-                SocketException se = (SocketException)e;
+	            // already closed
                 if ((uint)se.SocketErrorCode == 0x80004005)
-                {
-                    // already closed
-                    return true;
-                }
-                else if (se.ErrorCode == 11004)
-                {
-                    Logging.Log(LogLevel.Warn, "Proxy server [" + remarks + "(" + server + ")] "
-                        + "DNS lookup failed");
-                    return true;
-                }
-                else if (se.SocketErrorCode == SocketError.HostNotFound)
-                {
-                    Logging.Log(LogLevel.Warn, "Proxy server [" + remarks + "(" + server + ")] "
-                        + "Host not found");
-                    return true;
-                }
-                else if (se.SocketErrorCode == SocketError.ConnectionRefused)
-                {
-                    Logging.Log(LogLevel.Warn, "Proxy server [" + remarks + "(" + server + ")] "
-                        + "connection refused");
-                    return true;
-                }
-                else if (se.SocketErrorCode == SocketError.NetworkUnreachable)
-                {
-                    Logging.Log(LogLevel.Warn, "Proxy server [" + remarks + "(" + server + ")] "
-                        + "network unreachable");
-                    return true;
-                }
-                else if (se.SocketErrorCode == SocketError.TimedOut)
-                {
-                    //Logging.Log(LogLevel.Warn, "Proxy server [" + remarks + "(" + server + ")] "
-                    //    + "connection timeout");
-                    return true;
-                }
-                else if (se.SocketErrorCode == SocketError.Shutdown)
-                {
-                    return true;
-                }
-                else
-                {
-                    Logging.Log(LogLevel.Info, "Proxy server [" + remarks + "(" + server + ")] "
-                        + Convert.ToString(se.SocketErrorCode) + ":" + se.Message);
+                    return;
 
-                    Debug(ToString(new StackTrace().GetFrames()));
-
-                    return true;
+                switch (se.SocketErrorCode)
+                {
+	                case SocketError.ConnectionAborted:
+		                // closed by browser when sending
+		                // normally happens when download is canceled or a tab is closed before page is loaded
+		                break;
+	                case SocketError.ConnectionReset:
+		                // received rst
+		                break;
+	                case SocketError.NotConnected:
+		                // close when not connected
+		                break;
+	                case SocketError.Shutdown:
+	                case SocketError.Interrupted:
+		                // ignore
+		                break;
                 }
             }
-            return false;
+
+            Error(e);
+            Debug(new StackTrace().GetFramesString());
         }
 
+        
         [Conditional("DEBUG")]
         public static void LogBin(LogLevel level, string info, byte[] data, int length)
         {
@@ -409,29 +320,6 @@ namespace Shadowsocks.Controller
             //Log(level, info + s);
         }
 
-    }
-
-    // Simply extended System.IO.StreamWriter for adding timestamp workaround
-    public class StreamWriterWithTimestamp : StreamWriter
-    {
-        public StreamWriterWithTimestamp(Stream stream) : base(stream)
-        {
-        }
-
-        private string GetTimestamp()
-        {
-            return "[" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "] ";
-        }
-
-        public override void WriteLine(string value)
-        {
-            base.WriteLine(GetTimestamp() + value);
-        }
-
-        public override void Write(string value)
-        {
-            base.Write(GetTimestamp() + value);
-        }
     }
 
 }

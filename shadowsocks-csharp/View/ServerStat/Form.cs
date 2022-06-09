@@ -11,6 +11,7 @@ using System.Drawing;
 using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
+using Shadowsocks.Core.Fonts;
 using static Shadowsocks.Controller.I18N.Static;
 using static Shadowsocks.Framework.Windows.WM;
 
@@ -28,6 +29,8 @@ namespace Shadowsocks.View.ServerStat
 
         private int _updateSkip = 0;
         private int _updateTickCount = 0;
+
+        private readonly Font           _fontAwesomeFont = Fonts.FontAwesome(8);
 
         private ServerSpeedLogShow[] _serverStats;
         private List<int> serverOrder = new List<int>();
