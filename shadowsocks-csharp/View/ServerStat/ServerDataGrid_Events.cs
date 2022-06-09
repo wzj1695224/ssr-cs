@@ -2,22 +2,15 @@
 using System.Linq;
 using System.Windows.Forms;
 using static Shadowsocks.Framework.Util.ByteUtil;
-using static Shadowsocks.View.ServerStat.ServerDataGridEventHelper;
 
 
 namespace Shadowsocks.View.ServerStat
 {
-	internal static class ServerDataGridEventHelper
+	public partial class ServerStatForm
 	{
 		internal delegate void ServerDataGridViewCellEventHandlerFunc(object sender, DataGridViewCellEventArgs e, DataGridViewCell cell, DataGridViewColumn column, int id);
 
-	}
 
-
-
-
-	public partial class ServerStatForm
-	{
 		private void InitServerDataGridEvents()
 		{
 			this.ServerDataGrid.CellClick           += ServerDataGridViewCellEventHandler(this.ServerDataGrid_CellClick);
@@ -57,15 +50,15 @@ namespace Shadowsocks.View.ServerStat
 			var server = config.configs[id];
 			var host = server.server;
 
-			switch (column.Name)
+			switch ((ColumnIndex)column.Index)
 			{
-				case "Server":
+				case ColumnIndex.Server:
 					Console.WriteLine("config.checkSwitchAutoCloseAll:" + config.checkSwitchAutoCloseAll);
 					if (config.checkSwitchAutoCloseAll)
 						_controller.DisconnectAllConnections();
 					_controller.SelectServerIndex(id);
 					break;
-				case "Group":
+				case ColumnIndex.Group:
 					{
 						var group = server.group;
 						if (!string.IsNullOrEmpty(group))
@@ -78,11 +71,11 @@ namespace Shadowsocks.View.ServerStat
 						}
 						break;
 					}
-				case "Enable":
+				case ColumnIndex.Enable:
 					server.enable = !server.enable;
 					_controller.SelectServerIndex(config.index);
 					break;
-				case "Ping":
+				case ColumnIndex.Ping:
 					_serverDiagnostic.PingAsync(host, false);
 					break;
 			}
@@ -96,32 +89,32 @@ namespace Shadowsocks.View.ServerStat
 			var config = _controller.GetCurrentConfiguration();
 			var server = config.configs[id];
 
-			switch (column.Name)
+			switch ((ColumnIndex)column.Index)
 			{
-				case "ID":
-				case "Server":
+				case ColumnIndex.Id:
+				case ColumnIndex.Server:
 					_controller.ShowConfigForm(id);
 					break;
-				case "Connecting":
+				case ColumnIndex.Connecting:
 					server.GetConnections().CloseAll();
 					break;
-				case "MaxDownSpeed":
-				case "MaxUpSpeed":
+				case ColumnIndex.MaxDownSpeed:
+				case ColumnIndex.MaxUpSpeed:
 					server.ServerSpeedLog().ClearMaxSpeed();
 					break;
 
-				case "Upload":
-				case "Download":
+				case ColumnIndex.UpBytes:
+				case ColumnIndex.DownBytes:
 					server.ServerSpeedLog().ClearTrans();
 					break;
-				case "DownloadRaw":
+				case ColumnIndex.DownBytesRaw:
 					server.ServerSpeedLog().Clear();
 					server.enable = true;
 					break;
-				case "ConnectError":
-				case "ConnectTimeout":
-				case "ConnectEmpty":
-				case "Continuous":
+				case ColumnIndex.ConnectError:
+				case ColumnIndex.ConnectTimeout:
+				case ColumnIndex.ConnectEmptyResp:
+				case ColumnIndex.Continuous:
 					server.ServerSpeedLog().ClearError();
 					server.enable = true;
 					break;
@@ -144,10 +137,10 @@ namespace Shadowsocks.View.ServerStat
 			var cell1 = ServerDataGrid[e.Column.Index, e.RowIndex1];
 			var cell2 = ServerDataGrid[e.Column.Index, e.RowIndex2];
 
-			switch (e.Column.Name)
+			switch ((ColumnIndex)e.Column.Index)
 			{
-				case "Server":
-				case "Group":
+				case ColumnIndex.Server:
+				case ColumnIndex.Group:
 				{
 					// sort string
 					var s1 = Convert.ToString(e.CellValue1);
@@ -156,12 +149,12 @@ namespace Shadowsocks.View.ServerStat
 					e.Handled = true;
 					break;
 				}
-				case "ID":
-				case "TotalConnect":
-				case "Connecting":
-				case "ConnectError":
-				case "ConnectTimeout":
-				case "Continuous":
+				case ColumnIndex.Id:
+				case ColumnIndex.TotalConnect:
+				case ColumnIndex.Connecting:
+				case ColumnIndex.ConnectError:
+				case ColumnIndex.ConnectTimeout:
+				case ColumnIndex.Continuous:
 				{
 					// sort int
 					var v1 = Convert.ToInt32(e.CellValue1);
@@ -169,7 +162,7 @@ namespace Shadowsocks.View.ServerStat
 					e.SortResult = v1 - v2;
 					break;
 				}
-				case "ErrorPercent":
+				case ColumnIndex.ErrorPercent:
 				{
 					// TODO ?
 					var s1 = Convert.ToString(e.CellValue1);
@@ -179,7 +172,7 @@ namespace Shadowsocks.View.ServerStat
 					e.SortResult = v1 == v2 ? 0 : v1 < v2 ? -1 : 1;
 					break;
 				}
-				case "Ping":
+				case ColumnIndex.Ping:
 				{
 					var state1 = CellState.Get<CellState.Ping>(cell1);
 					var state2 = CellState.Get<CellState.Ping>(cell2);
@@ -188,14 +181,14 @@ namespace Shadowsocks.View.ServerStat
 					e.SortResult = (int)(ping1 - ping2);
 					break;
 				}
-				case "AvgLatency":
-				case "AvgDownSpeed":
-				case "MaxDownSpeed":
-				case "AvgUpSpeed":
-				case "MaxUpSpeed":
-				case "Upload":
-				case "Download":
-				case "DownloadRaw":
+				case ColumnIndex.AvgLatency:
+				case ColumnIndex.AvgDownSpeed:
+				case ColumnIndex.MaxDownSpeed:
+				case ColumnIndex.AvgUpSpeed:
+				case ColumnIndex.MaxUpSpeed:
+				case ColumnIndex.UpBytes:
+				case ColumnIndex.DownBytes:
+				case ColumnIndex.DownBytesRaw:
 				{
 					var s1 = Convert.ToString(e.CellValue1);
 					var s2 = Convert.ToString(e.CellValue2);
@@ -258,14 +251,14 @@ namespace Shadowsocks.View.ServerStat
 			var config = _controller.GetCurrentConfiguration();
 			var server = config.configs[id];
 
-			switch (column.Name)
+			switch ((ColumnIndex)column.Index)
 			{
-				case "Server":
+				case ColumnIndex.Server:
 				{
 					_controller.SelectServerIndex(id);
 					break;
 				}
-				case "Group":
+				case ColumnIndex.Group:
 				{
 					var group = server.group;
 					if (!string.IsNullOrEmpty(group))
@@ -278,7 +271,7 @@ namespace Shadowsocks.View.ServerStat
 					}
 					break;
 				}
-				case "Enable":
+				case ColumnIndex.Enable:
 				{
 					server.enable = !server.enable;
 					_controller.SelectServerIndex(config.index);

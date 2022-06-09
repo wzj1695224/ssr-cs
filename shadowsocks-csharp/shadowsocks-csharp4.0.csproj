@@ -271,8 +271,13 @@
     <Compile Include="View\ServerStat\ServerDataGrid.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="View\ServerStat\ServerDataGrid_Columns.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="View\ServerStat\ServerDataGrid_Update.cs" />
-    <Compile Include="View\ServerStat\ServerDataGrid_Events.cs" />
+    <Compile Include="View\ServerStat\ServerDataGrid_Events.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="View\ServerStat\Size.cs" />
     <Compile Include="View\SettingsForm.cs">
       <SubType>Form</SubType>

@@ -159,35 +159,35 @@ namespace Shadowsocks.View.ServerStat
 			var serverSpeedLog = _serverStats[id];
 			var host = server.server;
 
-			switch (column.Name)
+			switch ((ColumnIndex)column.Index)
 			{
-				case "Server":
+				case ColumnIndex.Server:
 				{
 					var color = config.index == id ? Color.Cyan : Color.White;
 					SetCellBackColor(cell, color);
 					SetCellText(cell, server.SimpleName());
 					break;
 				}
-				case "ServerAddr":
+				case ColumnIndex.ServerAddr:
 				{
 					var color = config.index == id ? Color.Cyan : Color.White; 
 					SetCellBackColor(cell, color);
 					SetCellText(cell, server.Addr());
 					break;
 				}
-				case "Group":
+				case ColumnIndex.Group:
 					SetCellText(cell, server.group);
 					break;
-				case "Enable" when server.enable:
+				case ColumnIndex.Enable when server.enable:
 					SetCellBackColor(cell, Color.White);
 					break;
-				case "Enable":
+				case ColumnIndex.Enable:
 					SetCellBackColor(cell, Color.Red);
 					break;
-				case "TotalConnect":
+				case ColumnIndex.TotalConnect:
 					SetCellText(cell, serverSpeedLog.totalConnectTimes);
 					break;
-				case "Connecting":
+				case ColumnIndex.Connecting:
 				{
 					var connecting = serverSpeedLog.totalConnectTimes - serverSpeedLog.totalDisconnectTimes;
 					var color = GetLevelColor(connecting, ConnectingLevelCount, ConnectingLevelColors);
@@ -195,7 +195,7 @@ namespace Shadowsocks.View.ServerStat
 					SetCellText(cell, connecting);
 					break;
 				}
-				case "Ping":
+				case ColumnIndex.Ping:
 				{
 					var cellState = CellState.GetOrCreate<CellState.Ping>(cell);
 
@@ -247,34 +247,34 @@ namespace Shadowsocks.View.ServerStat
 					}
 					break;
 				}
-				case "AvgLatency" when serverSpeedLog.avgConnectTime >= 0:
+				case ColumnIndex.AvgLatency when serverSpeedLog.avgConnectTime >= 0:
 					SetCellText(cell, serverSpeedLog.avgConnectTime / 1000);
 					break;
-				case "AvgLatency":
+				case ColumnIndex.AvgLatency:
 					SetCellText(cell, "-");
 					break;
-				case "AvgDownSpeed":
+				case ColumnIndex.AvgDownSpeed:
 					ServerDataGrid_UpdateSpeedCell(cell, serverSpeedLog.avgDownloadBytes);
 					break;
-				case "MaxDownSpeed":
+				case ColumnIndex.MaxDownSpeed:
 					ServerDataGrid_UpdateSpeedCell(cell, serverSpeedLog.maxDownloadBytes);
 					break;
-				case "AvgUpSpeed":
+				case ColumnIndex.AvgUpSpeed:
 					ServerDataGrid_UpdateSpeedCell(cell, serverSpeedLog.avgUploadBytes);
 					break;
-				case "MaxUpSpeed":
+				case ColumnIndex.MaxUpSpeed:
 					ServerDataGrid_UpdateSpeedCell(cell, serverSpeedLog.maxUploadBytes);
 					break;
-				case "Upload":
+				case ColumnIndex.UpBytes:
 					ServerDataGrid_UpdateAwareChangeCell(cell, serverSpeedLog.totalUploadBytes, UpTotalSteadyColor, UpTotalResetColor);
 					break;
-				case "Download":
+				case ColumnIndex.DownBytes:
 					ServerDataGrid_UpdateAwareChangeCell(cell, serverSpeedLog.totalDownloadBytes, DownTotalSteadyColor, DownTotalResetColor);
 					break;
-				case "DownloadRaw":
+				case ColumnIndex.DownBytesRaw:
 					ServerDataGrid_UpdateAwareChangeCell(cell, serverSpeedLog.totalDownloadRawBytes, DownRawTotalSteadyColor, DownRawTotalResetColor);
 					break;
-				case "ConnectError":
+				case ColumnIndex.ConnectError:
 				{
 					var val = serverSpeedLog.errorConnectTimes + serverSpeedLog.errorDecodeTimes;
 					var color = Color.FromArgb(255, (byte)Math.Max(0, 255 - val * 2.5), (byte)Math.Max(0, 255 - val * 2.5));
@@ -282,10 +282,10 @@ namespace Shadowsocks.View.ServerStat
 					SetCellText(cell, val);
 					break;
 				}
-				case "ConnectTimeout":
+				case ColumnIndex.ConnectTimeout:
 					SetCellText(cell, serverSpeedLog.errorTimeoutTimes);
 					break;
-				case "ConnectEmpty":
+				case ColumnIndex.ConnectEmptyResp:
 				{
 					var val = serverSpeedLog.errorEmptyTimes;
 					var color = Color.FromArgb(255, (byte)Math.Max(0, 255 - val * 8), (byte)Math.Max(0, 255 - val * 8));
@@ -293,7 +293,7 @@ namespace Shadowsocks.View.ServerStat
 					SetCellText(cell, val);
 					break;
 				}
-				case "Continuous":
+				case ColumnIndex.Continuous:
 				{
 					var val = serverSpeedLog.errorContinurousTimes;
 					var color = Color.FromArgb(255, (byte)Math.Max(0, 255 - val * 8), (byte)Math.Max(0, 255 - val * 8));
@@ -301,7 +301,7 @@ namespace Shadowsocks.View.ServerStat
 					SetCellText(cell, val);
 					break;
 				}
-				case "ErrorPercent" when serverSpeedLog.errorLogTimes + serverSpeedLog.totalConnectTimes - serverSpeedLog.totalDisconnectTimes > 0:
+				case ColumnIndex.ErrorPercent when serverSpeedLog.errorLogTimes + serverSpeedLog.totalConnectTimes - serverSpeedLog.totalDisconnectTimes > 0:
 				{
 					var percent = (serverSpeedLog.errorConnectTimes + serverSpeedLog.errorTimeoutTimes + serverSpeedLog.errorDecodeTimes)
 									  * 100.00
@@ -310,7 +310,7 @@ namespace Shadowsocks.View.ServerStat
 					SetCellText(cell, percent.ToString("F0") + "%");
 					break;
 				}
-				case "ErrorPercent":
+				case ColumnIndex.ErrorPercent:
 					SetCellBackColor(cell, Color.White);
 					SetCellText(cell, "-");
 					break;

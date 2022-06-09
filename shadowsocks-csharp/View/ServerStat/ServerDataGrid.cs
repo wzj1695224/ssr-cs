@@ -9,9 +9,6 @@ namespace Shadowsocks.View.ServerStat
 {
 	public partial class ServerStatForm
 	{
-		// ReSharper disable once InconsistentNaming
-		private ServerDataGridColumns Column;
-
 
 		private void SetupServerDataGrid()
 		{
@@ -39,27 +36,6 @@ namespace Shadowsocks.View.ServerStat
 
 
 
-
-
-
-
-		private class ServerDataGridColumns
-		{
-			public DataGridViewColumn Id => _serverDataGrid.Columns[0];
-
-			private readonly DataGridView _serverDataGrid;
-
-			public ServerDataGridColumns(DataGridView serverDataGrid)
-			{
-				_serverDataGrid = serverDataGrid;
-			}
-
-			public void DoForAll(Action<DataGridViewColumn> action)
-			{
-				foreach (DataGridViewColumn column in _serverDataGrid.Columns)
-					action(column);
-			}
-		}
 
 
 

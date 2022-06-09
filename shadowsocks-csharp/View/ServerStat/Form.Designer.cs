@@ -232,40 +232,44 @@
 			// 
 			dataGridViewCellStyle7.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
 			this.AvgDownSpeed.DefaultCellStyle = dataGridViewCellStyle7;
-			this.AvgDownSpeed.HeaderText = "Avg DSpeed";
+			this.AvgDownSpeed.HeaderText = "⬇️ Avg";
 			this.AvgDownSpeed.MinimumWidth = 60;
 			this.AvgDownSpeed.Name = "AvgDownSpeed";
 			this.AvgDownSpeed.ReadOnly = true;
+			this.AvgDownSpeed.ToolTipText = "Avg Down Speed";
 			this.AvgDownSpeed.Width = 60;
 			// 
 			// MaxDownSpeed
 			// 
 			dataGridViewCellStyle8.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
 			this.MaxDownSpeed.DefaultCellStyle = dataGridViewCellStyle8;
-			this.MaxDownSpeed.HeaderText = "Max DSpeed";
+			this.MaxDownSpeed.HeaderText = "⬇️ Max";
 			this.MaxDownSpeed.MinimumWidth = 2;
 			this.MaxDownSpeed.Name = "MaxDownSpeed";
 			this.MaxDownSpeed.ReadOnly = true;
+			this.MaxDownSpeed.ToolTipText = "Max Down Speed";
 			this.MaxDownSpeed.Width = 60;
 			// 
 			// AvgUpSpeed
 			// 
 			dataGridViewCellStyle9.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
 			this.AvgUpSpeed.DefaultCellStyle = dataGridViewCellStyle9;
-			this.AvgUpSpeed.HeaderText = "Avg UpSpeed";
+			this.AvgUpSpeed.HeaderText = "⬆️ Avg";
 			this.AvgUpSpeed.MinimumWidth = 60;
 			this.AvgUpSpeed.Name = "AvgUpSpeed";
 			this.AvgUpSpeed.ReadOnly = true;
+			this.AvgUpSpeed.ToolTipText = "Avg Up Speed";
 			this.AvgUpSpeed.Width = 60;
 			// 
 			// MaxUpSpeed
 			// 
 			dataGridViewCellStyle10.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
 			this.MaxUpSpeed.DefaultCellStyle = dataGridViewCellStyle10;
-			this.MaxUpSpeed.HeaderText = "Max UpSpeed";
+			this.MaxUpSpeed.HeaderText = "⬆️ Max";
 			this.MaxUpSpeed.MinimumWidth = 2;
 			this.MaxUpSpeed.Name = "MaxUpSpeed";
 			this.MaxUpSpeed.ReadOnly = true;
+			this.MaxUpSpeed.ToolTipText = "Max Up Speed";
 			this.MaxUpSpeed.Width = 60;
 			// 
 			// Download
